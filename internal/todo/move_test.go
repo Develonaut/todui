@@ -33,6 +33,21 @@ func TestReorderWithinSection(t *testing.T) {
 	}
 }
 
+func TestMoveToTop(t *testing.T) {
+	s := testSchema()
+	l := sample() // next: c
+	// move "a" (now) to the top of next
+	idx := indexByTask(l, "a")
+	if err := l.MoveToTop(s, idx, "next"); err != nil {
+		t.Fatal(err)
+	}
+	l.Normalize(s)
+	next := l.Section(s, "next")
+	if len(next) != 2 || next[0].Title != "a" {
+		t.Errorf("MoveToTop should place 'a' first in next: %+v", next)
+	}
+}
+
 func TestComplete(t *testing.T) {
 	s := testSchema()
 	l := sample()

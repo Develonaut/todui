@@ -100,21 +100,38 @@ func (s *Service) Start(id string) error {
 	})
 }
 
-// Move relocates the item to another section. Moving into the done section
-// stamps today's date if absent; moving out of done clears it.
+// Move relocates the item to the bottom of another section. Moving into the
+// done section stamps today's date if absent; moving out of done clears it.
 func (s *Service) Move(id, section string) error {
 	return s.mutate(id, func(l *todo.List, idx int) error {
 		if err := l.Move(s.set.Schema, idx, section); err != nil {
 			return err
 		}
-		switch doneKey := s.set.Schema.DoneKey(); {
-		case section == doneKey && l.Items[idx].DoneDate == "":
-			l.Items[idx].DoneDate = s.clk.Now().Format(dateLayout)
-		case section != doneKey:
-			l.Items[idx].DoneDate = ""
-		}
+		s.syncDoneDate(l, idx, section)
 		return nil
 	})
+}
+
+// MoveToTop relocates the item to the top of another section (used when an item
+// crosses a section boundary downward).
+func (s *Service) MoveToTop(id, section string) error {
+	return s.mutate(id, func(l *todo.List, idx int) error {
+		if err := l.MoveToTop(s.set.Schema, idx, section); err != nil {
+			return err
+		}
+		s.syncDoneDate(l, idx, section)
+		return nil
+	})
+}
+
+// syncDoneDate keeps an item's done-date consistent with its section membership.
+func (s *Service) syncDoneDate(l *todo.List, idx int, section string) {
+	switch doneKey := s.set.Schema.DoneKey(); {
+	case section == doneKey && l.Items[idx].DoneDate == "":
+		l.Items[idx].DoneDate = s.clk.Now().Format(dateLayout)
+	case section != doneKey:
+		l.Items[idx].DoneDate = ""
+	}
 }
 
 // Reorder shifts the item within its section toward the top (delta<0) or

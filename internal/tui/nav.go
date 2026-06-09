@@ -1,5 +1,27 @@
 package tui
 
+import "github.com/develonaut/todui/internal/todo"
+
+// sectionIndexOf returns the display index of a section, or -1.
+func sectionIndexOf(secs []todo.Section, key string) int {
+	for i := range secs {
+		if secs[i].Key == key {
+			return i
+		}
+	}
+	return -1
+}
+
+// cursorToItem places the cursor on an item matched by section and title.
+func (m *Model) cursorToItem(section, title string) {
+	for i := range m.rows {
+		if !m.rows[i].header && m.rows[i].section.Key == section && m.rows[i].item.Title == title {
+			m.cursor = i
+			return
+		}
+	}
+}
+
 // moveCursor shifts the cursor by delta within the row list, clamped.
 func (m *Model) moveCursor(delta int) {
 	m.cursor = max(0, min(m.cursor+delta, len(m.rows)-1))

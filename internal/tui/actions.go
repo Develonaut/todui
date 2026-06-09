@@ -48,19 +48,46 @@ func (m *Model) start() {
 	m.rebuild()
 }
 
-// reorder shifts the selected item within its section and follows it.
+// reorder shifts the selected item within its section, and at a section
+// boundary lifts it into the adjacent section (⇧↑ to the bottom of the section
+// above, ⇧↓ to the top of the section below).
 func (m *Model) reorder(delta int) {
 	r, ok := m.currentItem()
 	if !ok {
 		return
 	}
-	m.snapshot()
-	if err := m.svc.Reorder(r.id, delta); err != nil {
-		m.err = err
-		return
+	s := m.svc.Schema()
+	ci := sectionIndexOf(s.Sections, r.section.Key)
+	count := len(m.list.Section(s, r.section.Key))
+
+	switch {
+	case delta < 0 && r.item.Order == 0: // top of section → section above
+		if ci <= 0 {
+			return
+		}
+		dest := s.Sections[ci-1].Key
+		m.snapshot()
+		m.result("Moved "+r.id+" → "+s.Sections[ci-1].Title, m.svc.Move(r.id, dest))
+		m.rebuild()
+		m.cursorToItem(dest, r.item.Title)
+	case delta > 0 && r.item.Order == count-1: // bottom of section → section below
+		if ci < 0 || ci >= len(s.Sections)-1 {
+			return
+		}
+		dest := s.Sections[ci+1].Key
+		m.snapshot()
+		m.result("Moved "+r.id+" → "+s.Sections[ci+1].Title, m.svc.MoveToTop(r.id, dest))
+		m.rebuild()
+		m.cursorToItem(dest, r.item.Title)
+	default:
+		m.snapshot()
+		if err := m.svc.Reorder(r.id, delta); err != nil {
+			m.err = err
+			return
+		}
+		m.rebuild()
+		m.moveCursor(delta)
 	}
-	m.rebuild()
-	m.moveCursor(delta)
 }
 
 // moveSection moves the selected item to the adjacent section (any section,
