@@ -67,17 +67,47 @@ func (m *Model) openSections() []string {
 	return keys
 }
 
-// toggleCollapse folds or unfolds the section under the cursor, keeping the
-// cursor on that section's header.
+// setCollapsed folds/unfolds a section and keeps the cursor on its header.
+func (m *Model) setCollapsed(key string, v bool) {
+	m.collapsed[key] = v
+	m.rebuild()
+	m.cursorToSection(key)
+}
+
+// toggleCollapse folds or unfolds the section under the cursor.
 func (m *Model) toggleCollapse() {
+	if r, ok := m.selectedRow(); ok {
+		m.setCollapsed(r.section.Key, !m.collapsed[r.section.Key])
+	}
+}
+
+// expand opens a collapsed group, or descends into an open one (tree-style →).
+func (m *Model) expand() {
+	r, ok := m.selectedRow()
+	if !ok || !r.header {
+		return
+	}
+	if m.collapsed[r.section.Key] {
+		m.setCollapsed(r.section.Key, false)
+		return
+	}
+	m.moveCursor(1) // already open: step into the first child
+}
+
+// collapse closes an open group, or jumps from an item to its parent group
+// (tree-style ←).
+func (m *Model) collapse() {
 	r, ok := m.selectedRow()
 	if !ok {
 		return
 	}
-	key := r.section.Key
-	m.collapsed[key] = !m.collapsed[key]
-	m.rebuild()
-	m.cursorToSection(key)
+	if !r.header {
+		m.cursorToSection(r.section.Key)
+		return
+	}
+	if !m.collapsed[r.section.Key] {
+		m.setCollapsed(r.section.Key, true)
+	}
 }
 
 // goalBy adjusts the daily goal, clamped to a sane range.

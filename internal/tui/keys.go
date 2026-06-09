@@ -23,7 +23,9 @@ const (
 	actQuit        = "quit"
 	actConfirmYes  = "confirm.yes"
 	actConfirmNo   = "confirm.no"
-	actCollapse    = "collapse"
+	actFoldToggle  = "fold.toggle"
+	actExpand      = "fold.expand"
+	actCollapse    = "fold.collapse"
 	actGoalUp      = "goal.up"
 	actGoalDown    = "goal.down"
 )
@@ -54,8 +56,10 @@ func defaultKeymap() *keymap.Keymap {
 		keymap.Layer{Scope: scopeList, Bindings: []keymap.Binding{
 			{Action: actUp, Keys: []string{"up", "k"}, Hidden: true},
 			{Action: actDown, Keys: []string{"down", "j"}, Help: "navigate", HelpKey: "↑↓"},
-			{Action: actSectionPrev, Keys: []string{"left", "h", "shift+tab"}, Hidden: true},
-			{Action: actSectionNext, Keys: []string{"right", "l", "tab"}, Help: "section", HelpKey: "←→"},
+			{Action: actExpand, Keys: []string{"right", "l"}, Help: "fold", HelpKey: "←→"},
+			{Action: actCollapse, Keys: []string{"left", "h"}, Hidden: true},
+			{Action: actSectionNext, Keys: []string{"tab"}, Hidden: true},
+			{Action: actSectionPrev, Keys: []string{"shift+tab"}, Hidden: true},
 			{Action: actAdd, Keys: []string{"a"}, Help: "add"},
 		}},
 		keymap.Layer{Scope: scopeItem, Bindings: []keymap.Binding{
@@ -69,7 +73,7 @@ func defaultKeymap() *keymap.Keymap {
 			{Action: actMoveNext, Keys: []string{"shift+right", "L"}, Help: "move", HelpKey: "⇧←→"},
 		}},
 		keymap.Layer{Scope: scopeHeader, Bindings: []keymap.Binding{
-			{Action: actCollapse, Keys: []string{"space", " ", "enter"}, Help: "fold", HelpKey: "space"},
+			{Action: actFoldToggle, Keys: []string{"space", " ", "enter"}, Hidden: true},
 		}},
 		keymap.Layer{Scope: scopeEmpty, Bindings: nil},
 		keymap.Layer{Scope: scopeConfirm, Bindings: []keymap.Binding{

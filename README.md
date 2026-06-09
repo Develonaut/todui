@@ -78,12 +78,13 @@ Every command supports `--json` for scripting.
 
 ## Keybindings (TUI)
 
-`↑`/`↓` navigate · `←`/`→` section · `space` done (on an item) or fold/unfold
-(on a section header) · `a` add · `e` edit · `d` delete · `s` start ·
-`⇧↑`/`⇧↓` reorder · `⇧←`/`⇧→` move to section · `+`/`-` adjust goal ·
-`?` help · `q` quit. (Vim keys `j`/`k`/`h`/`l` and `Tab` work too — just not
-advertised.) The Done section starts collapsed; a magenta→purple progress bar
-tracks your daily goal.
+It navigates like a tree: `↑`/`↓` move through section groups and items, `→`
+opens a collapsed group (or steps into an open one), `←` collapses a group (or
+jumps from an item to its parent). Then `space` done · `a` add · `e` edit ·
+`d` delete · `s` start · `⇧↑`/`⇧↓` reorder · `⇧←`/`⇧→` move to section ·
+`Tab` jump section · `+`/`-` adjust goal · `?` help · `q` quit. (Vim keys
+`j`/`k`/`h`/`l` work too.) The Done section starts collapsed; a magenta→purple
+progress bar tracks your daily goal.
 
 Keybindings are **contextual and fully remappable**. They are organized into
 scopes (`global`, `list`, `item`, `confirm`); the active scope stack drives both

@@ -82,7 +82,9 @@ func (m *Model) buildActions() map[string]func() tea.Cmd {
 		actDelete:      none(m.beginDelete),
 		actConfirmYes:  none(m.confirmDelete),
 		actConfirmNo:   none(m.cancelDelete),
-		actCollapse:    none(m.toggleCollapse),
+		actFoldToggle:  none(m.toggleCollapse),
+		actExpand:      none(m.expand),
+		actCollapse:    none(m.collapse),
 		actGoalUp:      none(func() { m.goalBy(1) }),
 		actGoalDown:    none(func() { m.goalBy(-1) }),
 	}
