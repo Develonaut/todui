@@ -1,0 +1,34 @@
+# golangci-lint configuration for todui.
+# Enforces the Bento Box standards: small, clean, well-documented packages.
+run:
+  timeout: 3m
+
+linters:
+  enable:
+    - errcheck
+    - govet
+    - ineffassign
+    - staticcheck
+    - unused
+    - revive       # style + exported-doc-comment checks
+    - misspell
+    - unconvert
+    - gocyclo      # discourage large/complex functions
+    - bodyclose
+
+linters-settings:
+  gocyclo:
+    min-complexity: 15
+  revive:
+    rules:
+      - name: exported
+        severity: warning
+      - name: package-comments
+
+issues:
+  exclude-rules:
+    # Tests may be longer and less doc-strict.
+    - path: _test\.go
+      linters:
+        - gocyclo
+        - revive

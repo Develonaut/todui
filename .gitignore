@@ -1,0 +1,17 @@
+# Binaries
+/todui
+/td
+/dist/
+/bin/
+
+# Go
+*.test
+*.out
+coverage.*
+
+# Editors / OS
+.DS_Store
+*.swp
+
+# Local data the tool may create during dev
+*.local.toml
