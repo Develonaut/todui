@@ -27,6 +27,8 @@ jobs:
       - uses: actions/setup-go@v5
         with:
           go-version: '1.25'
-      - uses: golangci/golangci-lint-action@v6
+      # golangci-lint v2: v1's prebuilt binaries are built with go1.24 and
+      # refuse to lint our go-1.25 module (Charm v2 deps require 1.25).
+      - uses: golangci/golangci-lint-action@v8
         with:
-          version: latest
+          version: v2.12.2
