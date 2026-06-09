@@ -36,6 +36,11 @@ func (s Schema) byKey(key string) (Section, bool) {
 	return Section{}, false
 }
 
+// Lookup returns the section with the given key, reporting whether it exists.
+func (s Schema) Lookup(key string) (Section, bool) {
+	return s.byKey(key)
+}
+
 // DoneKey returns the key of the terminal (done) section, or "" if none.
 func (s Schema) DoneKey() string {
 	for i := range s.Sections {
