@@ -85,7 +85,7 @@ func parseOpen(s, section string, order map[string]int) todo.Item {
 		it.Tags = append([]string{s[m[2]:m[3]]}, it.Tags...)
 		s = s[:m[0]]
 	}
-	it.Task = strings.TrimSpace(s)
+	it.Title, it.Description = todo.SplitTitle(strings.TrimSpace(s))
 	it.Order = order[section]
 	order[section]++
 	return it
@@ -98,7 +98,7 @@ func parseDone(s, section string, order map[string]int) todo.Item {
 		it.DoneDate = s[m[2]:m[3]]
 		s = s[:m[0]]
 	}
-	it.Task = strings.TrimSpace(s)
+	it.Title, it.Description = todo.SplitTitle(strings.TrimSpace(s))
 	it.Order = order[section]
 	order[section]++
 	return it

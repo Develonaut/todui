@@ -11,13 +11,13 @@ type addCmd struct{}
 
 func (addCmd) Name() string { return "add" }
 func (addCmd) Usage() string {
-	return "add <task...> [--section S] [--tag T]... [--ado REF] [--context C] [--claimed]"
+	return "add <title...> [--desc D] [--section S] [--tag T]... [--ado REF] [--claimed]"
 }
 
 func (addCmd) Run(cx *Context, args []string) error {
 	fs, jsonFlag := newFlagSet("add")
 	section := fs.String("section", "", "section key (default: first non-done)")
-	context := fs.String("context", "", "trailing context after the task")
+	desc := fs.String("desc", "", "fuller description")
 	ado := fs.String("ado", "", "leading reference token (e.g. #123)")
 	claimed := fs.Bool("claimed", false, "mark as claimed")
 	var tags multiFlag
@@ -28,9 +28,13 @@ func (addCmd) Run(cx *Context, args []string) error {
 	}
 	cx.JSON = *jsonFlag
 
-	task := strings.TrimSpace(strings.Join(pos, " "))
-	if task == "" {
-		return fmt.Errorf("add: task text required")
+	text := strings.TrimSpace(strings.Join(pos, " "))
+	if text == "" {
+		return fmt.Errorf("add: title required")
+	}
+	title, description := todo.SplitTitle(text)
+	if *desc != "" {
+		description = *desc
 	}
 
 	sec := cx.Cfg.DefaultSection()
@@ -43,10 +47,10 @@ func (addCmd) Run(cx *Context, args []string) error {
 	}
 
 	id, err := cx.Svc.Add(todo.Item{
-		Task: task, Context: *context, ADO: *ado, Tags: tags, Claimed: *claimed, Section: sec,
+		Title: title, Description: description, ADO: *ado, Tags: tags, Claimed: *claimed, Section: sec,
 	})
 	if err != nil {
 		return err
 	}
-	return cx.report([]string{id}, fmt.Sprintf("Added %s — %s", id, task))
+	return cx.report([]string{id}, fmt.Sprintf("Added %s — %s", id, title))
 }

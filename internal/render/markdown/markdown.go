@@ -49,8 +49,9 @@ func (r *Renderer) Render(l todo.List) ([]byte, error) {
 
 // renderItem formats a single item line for its section.
 func (r *Renderer) renderItem(sec todo.Section, it todo.Item) string {
+	text := todo.JoinTitle(it.Title, it.Description)
 	if sec.Done {
-		line := "- [x] " + it.Task
+		line := "- [x] " + text
 		if it.DoneDate != "" {
 			line += " (done " + it.DoneDate + ")"
 		}
@@ -68,11 +69,7 @@ func (r *Renderer) renderItem(sec todo.Section, it todo.Item) string {
 		b.WriteString(it.ADO)
 		b.WriteByte(' ')
 	}
-	b.WriteString(it.Task)
-	if it.Context != "" {
-		b.WriteString(" — ")
-		b.WriteString(it.Context)
-	}
+	b.WriteString(text)
 	for _, tag := range it.Tags {
 		b.WriteString(" `[")
 		b.WriteString(tag)

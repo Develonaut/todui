@@ -11,13 +11,13 @@ type editCmd struct{}
 
 func (editCmd) Name() string { return "edit" }
 func (editCmd) Usage() string {
-	return "edit <id|query> [--task T] [--context C] [--ado REF] [--tag T]... [--clear-tags]"
+	return "edit <id|query> [--title T] [--desc D] [--ado REF] [--tag T]... [--clear-tags]"
 }
 
 func (editCmd) Run(cx *Context, args []string) error {
 	fs, jsonFlag := newFlagSet("edit")
-	task := fs.String("task", "", "new task text")
-	context := fs.String("context", "", "new context")
+	title := fs.String("title", "", "new title")
+	desc := fs.String("desc", "", "new description")
 	ado := fs.String("ado", "", "new leading reference token")
 	clearTags := fs.Bool("clear-tags", false, "remove all tags first")
 	var tags multiFlag
@@ -39,11 +39,11 @@ func (editCmd) Run(cx *Context, args []string) error {
 	fs.Visit(func(f *flag.Flag) { set[f.Name] = true })
 
 	err = cx.Svc.Edit(id, func(it *todo.Item) {
-		if set["task"] {
-			it.Task = *task
+		if set["title"] {
+			it.Title = *title
 		}
-		if set["context"] {
-			it.Context = *context
+		if set["desc"] {
+			it.Description = *desc
 		}
 		if set["ado"] {
 			it.ADO = *ado

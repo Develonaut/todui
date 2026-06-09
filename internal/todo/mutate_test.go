@@ -4,8 +4,8 @@ import "testing"
 
 func TestAddAppendsToSection(t *testing.T) {
 	l := sample()
-	idx := l.Add(Item{Task: "e", Section: "now"})
-	if l.Items[idx].Task != "e" {
+	idx := l.Add(Item{Title: "e", Section: "now"})
+	if l.Items[idx].Title != "e" {
 		t.Fatalf("Add returned idx %d for wrong item", idx)
 	}
 	if l.Items[idx].Order != 2 {
@@ -15,10 +15,10 @@ func TestAddAppendsToSection(t *testing.T) {
 
 func TestEdit(t *testing.T) {
 	l := sample()
-	if err := l.Edit(0, func(it *Item) { it.Task = "edited"; it.Tags = []string{"x"} }); err != nil {
+	if err := l.Edit(0, func(it *Item) { it.Title = "edited"; it.Tags = []string{"x"} }); err != nil {
 		t.Fatal(err)
 	}
-	if l.Items[0].Task != "edited" || len(l.Items[0].Tags) != 1 {
+	if l.Items[0].Title != "edited" || len(l.Items[0].Tags) != 1 {
 		t.Errorf("edit not applied: %+v", l.Items[0])
 	}
 	if err := l.Edit(99, func(*Item) {}); err == nil {

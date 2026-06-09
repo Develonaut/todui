@@ -34,33 +34,33 @@ const (
 	scopeConfirm = "confirm"
 )
 
-// defaultKeymap is the built-in binding set. Universal actions live in global;
-// list-navigation in list; per-item actions in item; the rest in their scope.
-// Bindings are generous (e.g. both "space" and " ", both "J" and "shift+j") so
-// they work regardless of how the terminal reports the key.
+// defaultKeymap is the built-in binding set. Arrow keys are the advertised
+// controls; vim keys (j/k/h/l) and the up/down halves of paired actions are
+// kept as Hidden aliases so they still work but don't clutter the help bar.
+// Paired actions use HelpKey to show a single combined hint (e.g. "↑↓").
 func defaultKeymap() *keymap.Keymap {
 	return keymap.New(
 		keymap.Layer{Scope: scopeGlobal, Bindings: []keymap.Binding{
 			{Action: actHelp, Keys: []string{"?"}, Help: "help"},
-			{Action: actReload, Keys: []string{"r"}, Help: "reload"},
+			{Action: actReload, Keys: []string{"r"}, Help: "reload", Hidden: true},
 			{Action: actQuit, Keys: []string{"q", "ctrl+c"}, Help: "quit"},
 		}},
 		keymap.Layer{Scope: scopeList, Bindings: []keymap.Binding{
-			{Action: actUp, Keys: []string{"k", "up"}, Help: "up"},
-			{Action: actDown, Keys: []string{"j", "down"}, Help: "down"},
-			{Action: actSectionPrev, Keys: []string{"shift+tab", "h", "left", "<"}, Help: "prev section"},
-			{Action: actSectionNext, Keys: []string{"tab", "l", "right", ">"}, Help: "next section"},
+			{Action: actUp, Keys: []string{"up", "k"}, Hidden: true},
+			{Action: actDown, Keys: []string{"down", "j"}, Help: "navigate", HelpKey: "↑↓"},
+			{Action: actSectionPrev, Keys: []string{"left", "h", "shift+tab"}, Hidden: true},
+			{Action: actSectionNext, Keys: []string{"right", "l", "tab"}, Help: "section", HelpKey: "←→"},
 			{Action: actAdd, Keys: []string{"a"}, Help: "add"},
 		}},
 		keymap.Layer{Scope: scopeItem, Bindings: []keymap.Binding{
-			{Action: actComplete, Keys: []string{"space", " ", "x"}, Help: "done"},
+			{Action: actComplete, Keys: []string{"space", " ", "x"}, Help: "done", HelpKey: "space"},
 			{Action: actEdit, Keys: []string{"e"}, Help: "edit"},
 			{Action: actStart, Keys: []string{"s"}, Help: "start"},
 			{Action: actDelete, Keys: []string{"d"}, Help: "delete"},
-			{Action: actReorderUp, Keys: []string{"K", "shift+up"}, Help: "move up"},
-			{Action: actReorderDown, Keys: []string{"J", "shift+down"}, Help: "move down"},
-			{Action: actMovePrev, Keys: []string{"H", "shift+left"}, Help: "← section"},
-			{Action: actMoveNext, Keys: []string{"L", "shift+right"}, Help: "section →"},
+			{Action: actReorderUp, Keys: []string{"shift+up", "K"}, Hidden: true},
+			{Action: actReorderDown, Keys: []string{"shift+down", "J"}, Help: "reorder", HelpKey: "⇧↑↓"},
+			{Action: actMovePrev, Keys: []string{"shift+left", "H"}, Hidden: true},
+			{Action: actMoveNext, Keys: []string{"shift+right", "L"}, Help: "move", HelpKey: "⇧←→"},
 		}},
 		keymap.Layer{Scope: scopeEmpty, Bindings: nil},
 		keymap.Layer{Scope: scopeConfirm, Bindings: []keymap.Binding{

@@ -15,10 +15,10 @@ func testSchema() Schema {
 // sample builds a small normalized list for tests.
 func sample() *List {
 	l := &List{Items: []Item{
-		{Task: "a", Section: "now", Order: 0},
-		{Task: "b", Section: "now", Order: 1},
-		{Task: "c", Section: "next", Order: 0},
-		{Task: "d", Section: "later", Order: 0},
+		{Title: "a", Section: "now", Order: 0},
+		{Title: "b", Section: "now", Order: 1},
+		{Title: "c", Section: "next", Order: 0},
+		{Title: "d", Section: "later", Order: 0},
 	}}
 	l.Normalize(testSchema())
 	return l

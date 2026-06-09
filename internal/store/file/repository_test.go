@@ -43,7 +43,7 @@ func TestMissingFileIsEmpty(t *testing.T) {
 func TestUpdateAndLoad(t *testing.T) {
 	r := newRepo(t, false)
 	err := r.Update(func(l *todo.List) error {
-		l.Add(todo.Item{Task: "x", Section: "now"})
+		l.Add(todo.Item{Title: "x", Section: "now"})
 		return nil
 	})
 	if err != nil {
@@ -53,7 +53,7 @@ func TestUpdateAndLoad(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if len(l.Items) != 1 || l.Items[0].Task != "x" {
+	if len(l.Items) != 1 || l.Items[0].Title != "x" {
 		t.Errorf("unexpected items: %+v", l.Items)
 	}
 }
@@ -61,7 +61,7 @@ func TestUpdateAndLoad(t *testing.T) {
 func TestMirrorWrittenReadOnly(t *testing.T) {
 	r := newRepo(t, true)
 	err := r.Update(func(l *todo.List) error {
-		l.Add(todo.Item{Task: "x", Section: "now"})
+		l.Add(todo.Item{Title: "x", Section: "now"})
 		l.Normalize(testSchema())
 		return nil
 	})
@@ -93,7 +93,7 @@ func TestConcurrentUpdatesDoNotLoseWrites(t *testing.T) {
 		go func() {
 			defer wg.Done()
 			_ = r.Update(func(l *todo.List) error {
-				l.Add(todo.Item{Task: "t", Section: "now"})
+				l.Add(todo.Item{Title: "t", Section: "now"})
 				return nil
 			})
 		}()

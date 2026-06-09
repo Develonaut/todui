@@ -12,7 +12,7 @@ import (
 // enterAdd opens an empty form for a new task in the current section.
 func (m *Model) enterAdd() tea.Cmd {
 	m.editID, m.editSec = "", ""
-	m.fTask, m.fContext, m.fTags, m.fADO = "", "", "", ""
+	m.fTitle, m.fDesc, m.fTags, m.fADO = "", "", "", ""
 	m.fClaimed = false
 	m.fSection = m.defaultFormSection()
 	m.form = m.buildForm()
@@ -27,8 +27,8 @@ func (m *Model) enterEdit() tea.Cmd {
 		return nil
 	}
 	m.editID, m.editSec = r.id, r.section.Key
-	m.fTask = r.item.Task
-	m.fContext = r.item.Context
+	m.fTitle = r.item.Title
+	m.fDesc = r.item.Description
 	m.fTags = strings.Join(r.item.Tags, ", ")
 	m.fADO = r.item.ADO
 	m.fClaimed = r.item.Claimed
@@ -55,8 +55,8 @@ func (m *Model) buildForm() *huh.Form {
 	}
 	return huh.NewForm(
 		huh.NewGroup(
-			huh.NewInput().Title("Task").Value(&m.fTask),
-			huh.NewInput().Title("Context").Value(&m.fContext),
+			huh.NewInput().Title("Title").Value(&m.fTitle),
+			huh.NewText().Title("Description").Value(&m.fDesc),
 			huh.NewInput().Title("Tags (comma-separated)").Value(&m.fTags),
 			huh.NewInput().Title("Reference").Placeholder("#123").Value(&m.fADO),
 			huh.NewSelect[string]().Title("Section").Options(opts...).Value(&m.fSection),
@@ -69,11 +69,11 @@ func (m *Model) buildForm() *huh.Form {
 func (m *Model) applyForm() {
 	tags := splitTags(m.fTags)
 	if m.editID == "" {
-		if strings.TrimSpace(m.fTask) == "" {
+		if strings.TrimSpace(m.fTitle) == "" {
 			return
 		}
 		_, err := m.svc.Add(todo.Item{
-			Task: m.fTask, Context: m.fContext, Tags: tags, ADO: m.fADO,
+			Title: m.fTitle, Description: m.fDesc, Tags: tags, ADO: m.fADO,
 			Claimed: m.fClaimed, Section: m.fSection,
 		})
 		m.result("Added", err)
@@ -81,8 +81,8 @@ func (m *Model) applyForm() {
 	}
 
 	err := m.svc.Edit(m.editID, func(it *todo.Item) {
-		it.Task = m.fTask
-		it.Context = m.fContext
+		it.Title = m.fTitle
+		it.Description = m.fDesc
 		it.Tags = tags
 		it.ADO = m.fADO
 		it.Claimed = m.fClaimed

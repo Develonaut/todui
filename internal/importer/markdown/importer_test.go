@@ -68,14 +68,14 @@ func TestImportExtractsFields(t *testing.T) {
 	if it, ok := find(list, "Did a thing"); !ok || it.Section != "done" || it.DoneDate != "2026-06-08, via tool" {
 		t.Errorf("done item = %+v", it)
 	}
-	if it, ok := find(list, "Plain task"); !ok || !strings.Contains(it.Task, "`[mid-text]`") {
+	if it, ok := find(list, "Plain task"); !ok || !strings.Contains(it.Title, "`[mid-text]`") {
 		t.Errorf("mid-text token should stay in task: %+v", it)
 	}
 }
 
 func find(list todo.List, sub string) (todo.Item, bool) {
 	for _, it := range list.Items {
-		if strings.Contains(it.Task, sub) {
+		if strings.Contains(it.Title, sub) {
 			return it, true
 		}
 	}

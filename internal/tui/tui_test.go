@@ -30,10 +30,10 @@ func testModel(t *testing.T) *Model {
 		{Key: "done", Title: "Done", Done: true},
 	}}
 	svc := app.NewService(repo, fixedClock{}, app.Settings{Schema: schema, DoneMax: 10})
-	if _, err := svc.Add(todo.Item{Task: "first", Section: "now"}); err != nil {
+	if _, err := svc.Add(todo.Item{Title: "first", Section: "now"}); err != nil {
 		t.Fatal(err)
 	}
-	if _, err := svc.Add(todo.Item{Task: "second", Section: "next"}); err != nil {
+	if _, err := svc.Add(todo.Item{Title: "second", Section: "next"}); err != nil {
 		t.Fatal(err)
 	}
 	m := New(svc, storePath, nil)
@@ -61,8 +61,8 @@ func TestDispatchNavigateAndComplete(t *testing.T) {
 		t.Fatalf("cursor = %d, want 0", m.cursor)
 	}
 	m.dispatch(actDown)
-	if m.cursor != 1 || m.rows[m.cursor].item.Task != "second" {
-		t.Fatalf("after down: cursor=%d task=%q", m.cursor, m.rows[m.cursor].item.Task)
+	if m.cursor != 1 || m.rows[m.cursor].item.Title != "second" {
+		t.Fatalf("after down: cursor=%d task=%q", m.cursor, m.rows[m.cursor].item.Title)
 	}
 	m.dispatch(actComplete)
 	if it, ok := find(m, "second"); !ok || it.section.Key != "done" {
@@ -98,7 +98,7 @@ func TestActiveScopesByContext(t *testing.T) {
 
 func find(m *Model, sub string) (visRow, bool) {
 	for _, r := range m.rows {
-		if strings.Contains(r.item.Task, sub) {
+		if strings.Contains(r.item.Title, sub) {
 			return r, true
 		}
 	}

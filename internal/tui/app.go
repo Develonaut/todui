@@ -60,8 +60,8 @@ type Model struct {
 	pendingReload bool
 
 	// form field bindings
-	fTask, fContext, fTags, fADO, fSection string
-	fClaimed                               bool
+	fTitle, fDesc, fTags, fADO, fSection string
+	fClaimed                             bool
 
 	status string
 	err    error

@@ -1,7 +1,5 @@
 package tui
 
-import "strings"
-
 // Text and layout helpers for the view. These operate on plain strings; callers
 // apply styling after truncation so ANSI escapes are never cut mid-sequence.
 
@@ -47,15 +45,6 @@ func truncate(s string, n int) string {
 		return "…"
 	}
 	return string(r[:n-1]) + "…"
-}
-
-// shortTitle returns the leading clause of a task — the text before the first
-// " — " separator — as a compact list title.
-func shortTitle(task string) string {
-	if i := strings.Index(task, " — "); i > 0 {
-		return task[:i]
-	}
-	return task
 }
 
 // firstDate returns the leading YYYY-MM-DD of a done annotation.

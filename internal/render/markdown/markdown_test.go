@@ -23,11 +23,11 @@ func TestRender(t *testing.T) {
 		Header:      []string{"# TODO", "", "_subtitle_"},
 		LastUpdated: "2026-06-09 08:50",
 		Items: []todo.Item{
-			{Task: "claimed one", Section: "in_progress", Claimed: true},
-			{Task: "first", Section: "now", ADO: "#1", Tags: []string{"x"}},
-			{Task: "second", Section: "now"},
-			{Task: "ctx", Section: "next", Context: "because"},
-			{Task: "shipped", Section: "done", DoneDate: "2026-06-04"},
+			{Title: "claimed one", Section: "in_progress", Claimed: true},
+			{Title: "first", Section: "now", ADO: "#1", Tags: []string{"x"}},
+			{Title: "second", Section: "now"},
+			{Title: "ctx", Section: "next", Description: "because"},
+			{Title: "shipped", Section: "done", DoneDate: "2026-06-04"},
 		},
 	}
 	l.Normalize(s)

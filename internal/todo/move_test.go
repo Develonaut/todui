@@ -46,7 +46,7 @@ func TestComplete(t *testing.T) {
 
 func indexByTask(l *List, task string) int {
 	for i := range l.Items {
-		if l.Items[i].Task == task {
+		if l.Items[i].Title == task {
 			return i
 		}
 	}

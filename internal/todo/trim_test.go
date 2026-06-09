@@ -9,7 +9,7 @@ func TestTrimDoneByCount(t *testing.T) {
 	s := testSchema()
 	l := &List{}
 	for i := range 5 {
-		l.Items = append(l.Items, Item{Task: "d", Section: "done", DoneDate: "2026-06-0" + string(rune('1'+i))})
+		l.Items = append(l.Items, Item{Title: "d", Section: "done", DoneDate: "2026-06-0" + string(rune('1'+i))})
 	}
 	now := time.Date(2026, 6, 9, 0, 0, 0, 0, time.UTC)
 	if err := l.TrimDone(s, now, 3, 0); err != nil {
@@ -27,14 +27,14 @@ func TestTrimDoneByCount(t *testing.T) {
 func TestTrimDoneByAge(t *testing.T) {
 	s := testSchema()
 	l := &List{Items: []Item{
-		{Task: "fresh", Section: "done", DoneDate: "2026-06-08"},
-		{Task: "old", Section: "done", DoneDate: "2026-05-01"},
+		{Title: "fresh", Section: "done", DoneDate: "2026-06-08"},
+		{Title: "old", Section: "done", DoneDate: "2026-05-01"},
 	}}
 	now := time.Date(2026, 6, 9, 0, 0, 0, 0, time.UTC)
 	if err := l.TrimDone(s, now, 10, 7); err != nil {
 		t.Fatal(err)
 	}
-	if len(l.Items) != 1 || l.Items[0].Task != "fresh" {
+	if len(l.Items) != 1 || l.Items[0].Title != "fresh" {
 		t.Errorf("age trim kept %+v", l.Items)
 	}
 }
@@ -42,14 +42,14 @@ func TestTrimDoneByAge(t *testing.T) {
 func TestTrimDoneParsesAnnotatedDate(t *testing.T) {
 	s := testSchema()
 	l := &List{Items: []Item{
-		{Task: "annotated", Section: "done", DoneDate: "2026-06-08, /standup"},
-		{Task: "old", Section: "done", DoneDate: "2026-05-01"},
+		{Title: "annotated", Section: "done", DoneDate: "2026-06-08, /standup"},
+		{Title: "old", Section: "done", DoneDate: "2026-05-01"},
 	}}
 	now := time.Date(2026, 6, 9, 0, 0, 0, 0, time.UTC)
 	if err := l.TrimDone(s, now, 10, 7); err != nil {
 		t.Fatal(err)
 	}
-	if len(l.Items) != 1 || l.Items[0].Task != "annotated" {
+	if len(l.Items) != 1 || l.Items[0].Title != "annotated" {
 		t.Errorf("annotated-date trim kept %+v", l.Items)
 	}
 }

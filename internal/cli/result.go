@@ -10,14 +10,14 @@ import (
 
 // row is an item plus its computed display ID, for JSON output.
 type row struct {
-	ID      string   `json:"id"`
-	Task    string   `json:"task"`
-	Context string   `json:"context,omitempty"`
-	Tags    []string `json:"tags,omitempty"`
-	ADO     string   `json:"ado,omitempty"`
-	Claimed bool     `json:"claimed,omitempty"`
-	Section string   `json:"section"`
-	Done    string   `json:"done_date,omitempty"`
+	ID          string   `json:"id"`
+	Title       string   `json:"title"`
+	Description string   `json:"description,omitempty"`
+	Tags        []string `json:"tags,omitempty"`
+	ADO         string   `json:"ado,omitempty"`
+	Claimed     bool     `json:"claimed,omitempty"`
+	Section     string   `json:"section"`
+	Done        string   `json:"done_date,omitempty"`
 }
 
 // rowsFor builds JSON rows for a normalized list.
@@ -26,7 +26,7 @@ func rowsFor(l todo.List, s todo.Schema) []row {
 	for i := range l.Items {
 		it := l.Items[i]
 		rows = append(rows, row{
-			ID: l.ComputeID(s, i), Task: it.Task, Context: it.Context, Tags: it.Tags,
+			ID: l.ComputeID(s, i), Title: it.Title, Description: it.Description, Tags: it.Tags,
 			ADO: it.ADO, Claimed: it.Claimed, Section: it.Section, Done: it.DoneDate,
 		})
 	}
@@ -77,7 +77,7 @@ func (cx *Context) printList(l todo.List, only string) {
 			if mark == "" {
 				mark = "✓"
 			}
-			fmt.Fprintf(cx.Out, "  %-3s %s", mark, it.Task)
+			fmt.Fprintf(cx.Out, "  %-3s %s", mark, it.Title)
 			if it.Claimed {
 				fmt.Fprint(cx.Out, "  *claimed*")
 			}

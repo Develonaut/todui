@@ -61,7 +61,7 @@ display — you never manage them by hand.
 ```
 todui [tui]                       launch the TUI (default)
 todui list [--section S] [--json]
-todui add <task...> [--section S] [--tag T]... [--ado REF] [--context C]
+todui add <title...> [--desc D] [--section S] [--tag T]... [--ado REF]
 todui done   <id|query> [--date YYYY-MM-DD]
 todui start  <id|query>           move to in-progress (claim)
 todui mv     <id> <section>
@@ -77,9 +77,10 @@ Every command supports `--json` for scripting.
 
 ## Keybindings (TUI)
 
-`j`/`k` or arrows move · `Tab`/`<`/`>` switch section · `space`/`x` complete ·
-`a` add · `e` edit · `d` delete · `s` start/claim · `J`/`K` reorder ·
-`H`/`L` move section · `r` reload · `?` help · `q` quit.
+`↑`/`↓` navigate · `←`/`→` section · `space` done · `a` add · `e` edit ·
+`d` delete · `s` start · `⇧↑`/`⇧↓` reorder · `⇧←`/`⇧→` move to section ·
+`?` help · `q` quit. (Vim keys `j`/`k`/`h`/`l` and `Tab` work too — they're
+just not advertised in the help bar.)
 
 Keybindings are **contextual and fully remappable**. They are organized into
 scopes (`global`, `list`, `item`, `confirm`); the active scope stack drives both

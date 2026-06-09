@@ -44,11 +44,11 @@ func testSvc(start string) (*Service, *memRepo) {
 
 func TestAddReturnsSequentialIDs(t *testing.T) {
 	svc, _ := testSvc("")
-	id1, err := svc.Add(todo.Item{Task: "a", Section: "now"})
+	id1, err := svc.Add(todo.Item{Title: "a", Section: "now"})
 	if err != nil || id1 != "NA" {
 		t.Fatalf("first add = %q,%v want NA", id1, err)
 	}
-	id2, _ := svc.Add(todo.Item{Task: "b", Section: "now"})
+	id2, _ := svc.Add(todo.Item{Title: "b", Section: "now"})
 	if id2 != "NB" {
 		t.Errorf("second add = %q want NB", id2)
 	}
@@ -56,7 +56,7 @@ func TestAddReturnsSequentialIDs(t *testing.T) {
 
 func TestCompleteStampsDateAndTime(t *testing.T) {
 	svc, _ := testSvc("")
-	if _, err := svc.Add(todo.Item{Task: "a", Section: "now"}); err != nil {
+	if _, err := svc.Add(todo.Item{Title: "a", Section: "now"}); err != nil {
 		t.Fatal(err)
 	}
 	if err := svc.Complete("NA"); err != nil {
@@ -73,7 +73,7 @@ func TestCompleteStampsDateAndTime(t *testing.T) {
 
 func TestStartWithoutStartSectionJustClaims(t *testing.T) {
 	svc, _ := testSvc("")
-	if _, err := svc.Add(todo.Item{Task: "a", Section: "now"}); err != nil {
+	if _, err := svc.Add(todo.Item{Title: "a", Section: "now"}); err != nil {
 		t.Fatal(err)
 	}
 	if err := svc.Start("NA"); err != nil {
@@ -87,7 +87,7 @@ func TestStartWithoutStartSectionJustClaims(t *testing.T) {
 
 func TestStartMovesToStartSection(t *testing.T) {
 	svc, _ := testSvc("in_progress")
-	if _, err := svc.Add(todo.Item{Task: "a", Section: "now"}); err != nil {
+	if _, err := svc.Add(todo.Item{Title: "a", Section: "now"}); err != nil {
 		t.Fatal(err)
 	}
 	if err := svc.Start("NA"); err != nil {

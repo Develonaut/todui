@@ -227,7 +227,8 @@ func candidates(cx *Context, arg string) ([]string, error) {
 	q := strings.ToLower(arg)
 	var matches []string
 	for i := range l.Items {
-		if id := l.ComputeID(s, i); id != "" && strings.Contains(strings.ToLower(l.Items[i].Task), q) {
+		text := strings.ToLower(l.Items[i].Title + " " + l.Items[i].Description)
+		if id := l.ComputeID(s, i); id != "" && strings.Contains(text, q) {
 			matches = append(matches, id)
 		}
 	}

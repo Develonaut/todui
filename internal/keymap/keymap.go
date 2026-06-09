@@ -10,10 +10,16 @@ package keymap
 import "slices"
 
 // Binding maps one or more keys to an action, with help text for display.
+//
+// Keys later in the slice are aliases (e.g. vim keys alongside arrows). HelpKey,
+// when set, overrides how the key is shown in help (e.g. "↑↓"). Hidden bindings
+// still dispatch but are omitted from Help, so alias keys don't clutter the bar.
 type Binding struct {
-	Action string
-	Keys   []string
-	Help   string
+	Action  string
+	Keys    []string
+	Help    string
+	HelpKey string
+	Hidden  bool
 }
 
 // Layer is the set of bindings for one scope.
@@ -55,8 +61,8 @@ func (k *Keymap) Match(key string, active []string) (string, bool) {
 }
 
 // Help returns the bindings visible in the active scopes, most specific first,
-// with each action appearing once (the most specific binding wins). This is the
-// single source the help bar should render.
+// with each action appearing once (the most specific binding wins). Hidden
+// bindings are omitted. This is the single source the help bar should render.
 func (k *Keymap) Help(active []string) []Binding {
 	seen := make(map[string]bool)
 	var out []Binding
@@ -66,6 +72,9 @@ func (k *Keymap) Help(active []string) []Binding {
 				continue
 			}
 			seen[b.Action] = true
+			if b.Hidden {
+				continue
+			}
 			out = append(out, b)
 		}
 	}

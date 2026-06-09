@@ -31,17 +31,17 @@ func TestSeqIndexInvalid(t *testing.T) {
 func TestComputeID(t *testing.T) {
 	s := testSchema()
 	l := &List{Items: []Item{
-		{Task: "a", Section: "now"},
-		{Task: "b", Section: "now"},
-		{Task: "c", Section: "next"},
-		{Task: "done one", Section: "done", DoneDate: "2026-06-01"},
+		{Title: "a", Section: "now"},
+		{Title: "b", Section: "now"},
+		{Title: "c", Section: "next"},
+		{Title: "done one", Section: "done", DoneDate: "2026-06-01"},
 	}}
 	l.Normalize(s)
 	want := map[string]string{"a": "NA", "b": "NB", "c": "XA", "done one": ""}
 	for i := range l.Items {
 		got := l.ComputeID(s, i)
-		if got != want[l.Items[i].Task] {
-			t.Errorf("ComputeID(%q) = %q, want %q", l.Items[i].Task, got, want[l.Items[i].Task])
+		if got != want[l.Items[i].Title] {
+			t.Errorf("ComputeID(%q) = %q, want %q", l.Items[i].Title, got, want[l.Items[i].Title])
 		}
 	}
 }

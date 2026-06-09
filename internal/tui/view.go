@@ -139,7 +139,7 @@ func (m *Model) itemLine(s todo.Schema, sec todo.Section, it todo.Item, selected
 		dot = styleClaim.Render("●")
 	}
 
-	title := truncate(shortTitle(it.Task), max(1, min(cw-8, titleWidth)))
+	title := truncate(it.Title, max(1, min(cw-8, titleWidth)))
 	style := styleItem
 	if selected {
 		style = styleSelect
@@ -147,8 +147,8 @@ func (m *Model) itemLine(s todo.Schema, sec todo.Section, it todo.Item, selected
 	return cursor + styleID.Render(fmt.Sprintf("%-3s", mark)) + " " + dot + " " + style.Render(title)
 }
 
-// detailBody renders the selected task's full, dimmed detail for the DETAIL
-// panel: a header line, the wrapped description, then context/tags/ref.
+// detailBody renders the selected task's detail for the DETAIL panel: a header
+// line, the title, the dimmed description, then tags/ref.
 func (m *Model) detailBody(cw, height int) string {
 	r, ok := m.selectedRow()
 	if !ok {
@@ -169,12 +169,13 @@ func (m *Model) detailBody(cw, height int) string {
 	}
 
 	lines := []string{strings.Join(bits, styleFaint.Render(" · ")), ""}
-	lines = append(lines, strings.Split(styleDetail.Width(cw).Render(it.Task), "\n")...)
+	lines = append(lines, strings.Split(styleSelect.Width(cw).Render(it.Title), "\n")...)
+	if it.Description != "" {
+		lines = append(lines, "")
+		lines = append(lines, strings.Split(styleDetail.Width(cw).Render(it.Description), "\n")...)
+	}
 
 	var meta []string
-	if it.Context != "" {
-		meta = append(meta, styleDim.Render("context ")+styleDetail.Render(it.Context))
-	}
 	if len(it.Tags) > 0 {
 		tags := make([]string, len(it.Tags))
 		for i, t := range it.Tags {
@@ -200,7 +201,11 @@ func (m *Model) helpBar(w int) string {
 		if len(bind.Keys) == 0 {
 			continue
 		}
-		seg := styleKey.Render(keyLabel(bind.Keys[0])) + " " + styleDim.Render(bind.Help)
+		key := bind.HelpKey
+		if key == "" {
+			key = keyLabel(bind.Keys[0])
+		}
+		seg := styleKey.Render(key) + " " + styleDim.Render(bind.Help)
 		sep := ""
 		if b.Len() > 0 {
 			sep = "  "
