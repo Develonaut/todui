@@ -36,10 +36,11 @@ func seqIndex(s string) (int, bool) {
 }
 
 // ID returns the positional identifier for an item in section sec at the given
-// normalized order (e.g. "NA"), or "" for the done section or a section without
-// a letter.
+// normalized order (e.g. "NA"), or "" for a section without a letter. A done
+// section may carry a letter so its items stay addressable in the CLI/TUI; the
+// Markdown renderer still omits IDs from done lines.
 func (s Schema) ID(sec Section, order int) string {
-	if sec.Done || sec.Letter == "" {
+	if sec.Letter == "" {
 		return ""
 	}
 	return sec.Letter + seqLabel(order)

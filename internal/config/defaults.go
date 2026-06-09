@@ -37,7 +37,7 @@ func Default() Config {
 			{Key: "now", Title: "Now", Letter: "N"},
 			{Key: "next", Title: "Next", Letter: "X"},
 			{Key: "later", Title: "Later", Letter: "L"},
-			{Key: "done", Title: "Done", Done: true},
+			{Key: "done", Title: "Done", Letter: "D", Done: true},
 		},
 		Done: DoneConfig{MaxItems: 10, MaxAgeDays: 7},
 	}

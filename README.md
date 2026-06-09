@@ -45,7 +45,7 @@ store  = "~/.local/share/todui/todo.toml"   # where tasks live
 [[section]]  key = "now"    title = "Now"    letter = "N"
 [[section]]  key = "next"   title = "Next"   letter = "X"
 [[section]]  key = "later"  title = "Later"  letter = "L"
-[[section]]  key = "done"   title = "Done"   done = true
+[[section]]  key = "done"   title = "Done"   letter = "D"  done = true
 
 [done]
 max_items = 10
