@@ -50,9 +50,14 @@ func (l *List) TrimDone(s Schema, now time.Time, maxItems, maxAgeDays int) error
 	return nil
 }
 
-// doneTime parses a stored done date, returning the zero time if unparseable.
+// doneTime parses the leading date of a completion annotation, returning the
+// zero time if absent. DoneDate may carry a trailing note (e.g.
+// "2026-06-08, /standup"), so only the date prefix is read.
 func doneTime(s string) time.Time {
-	t, err := time.Parse(doneDateLayout, s)
+	if len(s) < len(doneDateLayout) {
+		return time.Time{}
+	}
+	t, err := time.Parse(doneDateLayout, s[:len(doneDateLayout)])
 	if err != nil {
 		return time.Time{}
 	}

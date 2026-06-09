@@ -39,6 +39,21 @@ func TestTrimDoneByAge(t *testing.T) {
 	}
 }
 
+func TestTrimDoneParsesAnnotatedDate(t *testing.T) {
+	s := testSchema()
+	l := &List{Items: []Item{
+		{Task: "annotated", Section: "done", DoneDate: "2026-06-08, /standup"},
+		{Task: "old", Section: "done", DoneDate: "2026-05-01"},
+	}}
+	now := time.Date(2026, 6, 9, 0, 0, 0, 0, time.UTC)
+	if err := l.TrimDone(s, now, 10, 7); err != nil {
+		t.Fatal(err)
+	}
+	if len(l.Items) != 1 || l.Items[0].Task != "annotated" {
+		t.Errorf("annotated-date trim kept %+v", l.Items)
+	}
+}
+
 func TestTrimDoneLeavesOpenItems(t *testing.T) {
 	s := testSchema()
 	l := sample() // no done items

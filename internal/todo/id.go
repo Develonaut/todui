@@ -35,16 +35,26 @@ func seqIndex(s string) (int, bool) {
 	return n - 1, true
 }
 
+// ID returns the positional identifier for an item in section sec at the given
+// normalized order (e.g. "NA"), or "" for the done section or a section without
+// a letter.
+func (s Schema) ID(sec Section, order int) string {
+	if sec.Done || sec.Letter == "" {
+		return ""
+	}
+	return sec.Letter + seqLabel(order)
+}
+
 // ComputeID returns the positional identifier for the item at idx (e.g. "NA"),
 // or "" for items in the done section. It assumes the list is normalized so
 // that an item's Order is its position within its section.
 func (l *List) ComputeID(s Schema, idx int) string {
 	it := l.Items[idx]
 	sec, ok := s.byKey(it.Section)
-	if !ok || sec.Done || sec.Letter == "" {
+	if !ok {
 		return ""
 	}
-	return sec.Letter + seqLabel(it.Order)
+	return s.ID(sec, it.Order)
 }
 
 // Resolve maps a positional identifier back to its item index. It is
