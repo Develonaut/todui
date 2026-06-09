@@ -79,7 +79,7 @@ type Registry map[string]Command
 func NewRegistry() Registry {
 	cmds := []Command{
 		listCmd{}, addCmd{}, doneCmd{}, startCmd{}, mvCmd{}, reorderCmd{},
-		editCmd{}, rmCmd{}, renderCmd{}, resolveCmd{}, initCmd{}, tuiCmd{},
+		editCmd{}, rmCmd{}, renderCmd{}, resolveCmd{}, importCmd{}, initCmd{}, tuiCmd{},
 	}
 	r := make(Registry, len(cmds))
 	for _, c := range cmds {

@@ -57,6 +57,15 @@ func (s *Service) Touch() error {
 	})
 }
 
+// Replace overwrites the entire list (used by import), then finalizes.
+func (s *Service) Replace(list todo.List) error {
+	return s.repo.Update(func(l *todo.List) error {
+		*l = list
+		s.finalize(l)
+		return nil
+	})
+}
+
 // Add inserts a new item and returns its computed display ID.
 func (s *Service) Add(it todo.Item) (string, error) {
 	var id string
