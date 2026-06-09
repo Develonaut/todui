@@ -64,6 +64,7 @@ func buildService(cfg config.Config, renderer ports.Renderer) *app.Service {
 		StartSection: cfg.StartSection,
 		DoneMax:      cfg.Done.MaxItems,
 		DoneAge:      cfg.Done.MaxAgeDays,
+		Goal:         cfg.GoalToday,
 	}
 	return app.NewService(repo, clock.System{}, set)
 }

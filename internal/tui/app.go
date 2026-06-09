@@ -5,7 +5,10 @@ package tui
 
 import (
 	"path/filepath"
+	"strings"
+	"time"
 
+	"charm.land/bubbles/v2/progress"
 	tea "charm.land/bubbletea/v2"
 	huh "charm.land/huh/v2"
 	"github.com/fsnotify/fsnotify"
@@ -23,8 +26,10 @@ const (
 	modeConfirm
 )
 
-// visRow is one rendered item plus the context needed to act on it.
+// visRow is one navigable line: either a section header or an item. Headers are
+// selectable so they can be collapsed/expanded.
 type visRow struct {
+	header  bool
 	item    todo.Item
 	id      string
 	section todo.Section
@@ -41,7 +46,11 @@ type Model struct {
 	list       todo.List
 	rows       []visRow
 	cursor     int
-	listOffset int // first visible list line (vertical scroll)
+	listOffset int             // first visible list line (vertical scroll)
+	collapsed  map[string]bool // section key -> collapsed
+
+	goal     int            // daily completion goal
+	progress progress.Model // header progress bar
 
 	mode      mode
 	form      *huh.Form
@@ -61,7 +70,6 @@ type Model struct {
 
 	// form field bindings
 	fTitle, fDesc, fTags, fADO, fSection string
-	fClaimed                             bool
 
 	status string
 	err    error
@@ -80,9 +88,16 @@ func New(svc *app.Service, storePath string, overrides []keymap.Override) *Model
 		mode:      modeList,
 		storePath: storePath,
 		watcher:   newWatcher(storePath),
+		collapsed: map[string]bool{},
+		goal:      svc.Goal(),
+		progress:  progress.New(),
+	}
+	if dk := svc.Schema().DoneKey(); dk != "" {
+		m.collapsed[dk] = true // start with completed items folded away
 	}
 	m.actions = m.buildActions()
 	m.rebuild()
+	m.cursor = m.firstItemIndex()
 	return m
 }
 
@@ -99,7 +114,8 @@ func (m *Model) Init() tea.Cmd {
 	return watchCmd(m.watcher, filepath.Base(m.storePath))
 }
 
-// rebuild reloads the list from the service and flattens it into rows.
+// rebuild reloads the list from the service and flattens it into navigable rows
+// (a header per section, then its items unless the section is collapsed).
 func (m *Model) rebuild() {
 	l, err := m.svc.List()
 	if err != nil {
@@ -110,17 +126,26 @@ func (m *Model) rebuild() {
 	s := m.svc.Schema()
 	m.rows = m.rows[:0]
 	for i, sec := range s.Sections {
+		m.rows = append(m.rows, visRow{header: true, section: sec, secIdx: i})
+		if m.collapsed[sec.Key] {
+			continue
+		}
 		for _, it := range l.Section(s, sec.Key) {
 			m.rows = append(m.rows, visRow{item: it, id: s.ID(sec, it.Order), section: sec, secIdx: i})
 		}
 	}
-	if m.cursor >= len(m.rows) {
-		m.cursor = len(m.rows) - 1
-	}
-	if m.cursor < 0 {
-		m.cursor = 0
-	}
+	m.cursor = clamp(m.cursor, 0, max(0, len(m.rows)-1))
 	m.pendingReload = false
+}
+
+// firstItemIndex returns the row of the first item (skipping leading headers).
+func (m *Model) firstItemIndex() int {
+	for i := range m.rows {
+		if !m.rows[i].header {
+			return i
+		}
+	}
+	return 0
 }
 
 // selectedRow returns the row under the cursor, if any.
@@ -129,6 +154,37 @@ func (m *Model) selectedRow() (visRow, bool) {
 		return visRow{}, false
 	}
 	return m.rows[m.cursor], true
+}
+
+// currentItem returns the selected row only when it is an addressable item.
+func (m *Model) currentItem() (visRow, bool) {
+	r, ok := m.selectedRow()
+	if !ok || r.header || r.id == "" {
+		return visRow{}, false
+	}
+	return r, true
+}
+
+// cursorToSection moves the cursor onto a section's header.
+func (m *Model) cursorToSection(key string) {
+	for i := range m.rows {
+		if m.rows[i].header && m.rows[i].section.Key == key {
+			m.cursor = i
+			return
+		}
+	}
+}
+
+// doneToday counts items completed on today's date.
+func (m *Model) doneToday() int {
+	today := time.Now().Format("2006-01-02")
+	n := 0
+	for i := range m.list.Items {
+		if strings.HasPrefix(m.list.Items[i].DoneDate, today) {
+			n++
+		}
+	}
+	return n
 }
 
 // result records the outcome of a mutation as a status message or an error.

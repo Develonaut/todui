@@ -12,7 +12,7 @@ func TestRoundTrip(t *testing.T) {
 		Header:      []string{"# T", "", "_sub_"},
 		LastUpdated: "2026-06-09 08:50",
 		Items: []todo.Item{
-			{Title: "a", Section: "now", Order: 0, Tags: []string{"x", "y"}, ADO: "#1", Claimed: true},
+			{Title: "a", Section: "now", Order: 0, Tags: []string{"x", "y"}, ADO: "#1"},
 			{Title: "b", Section: "next", Order: 0, Description: "ctx"},
 			{Title: "d", Section: "done", Order: 0, DoneDate: "2026-06-04"},
 		},

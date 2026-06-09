@@ -6,8 +6,6 @@ import (
 
 	tea "charm.land/bubbletea/v2"
 	"charm.land/lipgloss/v2"
-
-	"github.com/develonaut/todui/internal/todo"
 )
 
 // titleWidth caps a list title so rows stay short regardless of panel width.
@@ -33,12 +31,13 @@ func (m *Model) viewForm() string {
 	if m.editID != "" {
 		title = "Edit " + m.editID
 	}
-	body := lipgloss.JoinVertical(lipgloss.Left, styleTitle.Render(title), "", m.form.View())
+	header := lipgloss.NewStyle().Foreground(lipgloss.Color("#FF5FD2")).Bold(true).Render(title)
+	body := lipgloss.JoinVertical(lipgloss.Left, header, "", m.form.View())
 	return lipgloss.NewStyle().Margin(1, 2).Render(body)
 }
 
-// viewList renders the framed layout: a title row, a full-width TASKS panel
-// stacked above a full-width DETAIL panel, and a bottom keybar.
+// viewList renders the logo + goal bar, a full-width TASKS panel above a DETAIL
+// panel, and a bottom keybar.
 func (m *Model) viewList() string {
 	w := m.width
 	if w <= 0 {
@@ -49,15 +48,16 @@ func (m *Model) viewList() string {
 		h = 24
 	}
 
-	// title(1) + blank(1) + tasks(listH+2) + detail(detailH+2) + keybar(1) = h
+	// logo(1) + goal(1) + blank(1) + tasks(listH+2) + detail(detailH+2) + keybar(1)
 	detailH := clamp(h/4, 5, 9)
-	listH := max(h-detailH-7, 3)
+	listH := max(h-detailH-8, 3)
 
 	tasks := framePanel("TASKS", m.listBody(w-4, listH), w, styleBorderActive)
 	detail := framePanel("DETAIL", m.detailBody(w-4, detailH), w, styleBorder)
 
 	return strings.Join([]string{
-		m.titleBar(w),
+		spread(logo(), styleDim.Render(m.list.LastUpdated), w),
+		m.goalBar(w),
 		"",
 		tasks,
 		detail,
@@ -65,17 +65,37 @@ func (m *Model) viewList() string {
 	}, "\n")
 }
 
-// titleBar renders the app name on the left and the last-updated stamp right.
-func (m *Model) titleBar(w int) string {
-	left := styleTitle.Render("todui")
-	right := styleDim.Render(m.list.LastUpdated)
-	return spread(left, right, w)
+// logo renders the TODUI wordmark with a magenta→purple per-letter gradient.
+func logo() string {
+	const letters = "TODUI"
+	var b strings.Builder
+	for i, ch := range letters {
+		c := logoColors[i%len(logoColors)]
+		b.WriteString(lipgloss.NewStyle().Foreground(lipgloss.Color(c)).Bold(true).Render(string(ch)))
+		if i < len(letters)-1 {
+			b.WriteByte(' ')
+		}
+	}
+	return b.String()
+}
+
+// goalBar renders the daily-goal progress bar and count (empty when no goal).
+func (m *Model) goalBar(w int) string {
+	if m.goal <= 0 {
+		return ""
+	}
+	done := m.doneToday()
+	pct := float64(done) / float64(m.goal)
+	if pct > 1 {
+		pct = 1
+	}
+	return m.progress.ViewAs(pct) + styleDim.Render(fmt.Sprintf("  %d/%d done today", done, m.goal))
 }
 
 // bottomBar renders contextual help (or a status/confirm message) on the left
 // and the item count on the right.
 func (m *Model) bottomBar(w int) string {
-	right := styleDim.Render(fmt.Sprintf("%d items", len(m.rows)))
+	right := styleDim.Render(fmt.Sprintf("%d items", len(m.list.Items)))
 	avail := w - lipgloss.Width(right) - 2
 
 	var left string
@@ -92,77 +112,97 @@ func (m *Model) bottomBar(w int) string {
 	return spread(left, right, w)
 }
 
-// listBody builds the scrollable, section-grouped task lines for the TASKS panel.
+// listBody builds the scrollable, section-grouped lines for the TASKS panel.
 func (m *Model) listBody(cw, height int) string {
 	lines, cursorLine := m.listLines(cw)
 	m.ensureVisible(cursorLine, height, len(lines))
 	return strings.Join(padLines(window(lines, m.listOffset, height), height), "\n")
 }
 
-// listLines builds every list line (section headers and truncated item rows)
-// for inner width cw and reports which line the cursor is on.
+// listLines renders every navigable row (headers and items) and reports which
+// line the cursor is on.
 func (m *Model) listLines(cw int) ([]string, int) {
-	s := m.svc.Schema()
 	var lines []string
 	cursorLine := 0
-	idx := 0
-	for i, sec := range s.Sections {
-		if i > 0 {
-			lines = append(lines, "")
-		}
-		items := m.list.Section(s, sec.Key)
-		lines = append(lines, sectionStyle(i).Render(sec.Title)+styleDim.Render(fmt.Sprintf("  (%d)", len(items))))
-		for _, it := range items {
-			if idx == m.cursor {
+	for i, r := range m.rows {
+		if r.header {
+			if i > 0 {
+				lines = append(lines, "")
+			}
+			if i == m.cursor {
 				cursorLine = len(lines)
 			}
-			lines = append(lines, m.itemLine(s, sec, it, idx == m.cursor, cw))
-			idx++
+			lines = append(lines, m.headerLine(r, i == m.cursor))
+			continue
 		}
+		if i == m.cursor {
+			cursorLine = len(lines)
+		}
+		lines = append(lines, m.itemLine(r, cw, i == m.cursor))
 	}
 	return lines, cursorLine
 }
 
-// itemLine renders one compact row: cursor, ID, claimed dot, and short title.
-func (m *Model) itemLine(s todo.Schema, sec todo.Section, it todo.Item, selected bool, cw int) string {
-	mark := s.ID(sec, it.Order)
+// headerLine renders a section header with a fold indicator and count.
+func (m *Model) headerLine(r visRow, selected bool) string {
+	icon := "▾"
+	if m.collapsed[r.section.Key] {
+		icon = "▸"
+	}
+	count := len(m.list.Section(m.svc.Schema(), r.section.Key))
+	iconStyle, titleStyle := styleDim, sectionStyle(r.secIdx)
+	if selected {
+		iconStyle, titleStyle = styleCursor, titleStyle.Bold(true)
+	}
+	return iconStyle.Render(icon) + " " + titleStyle.Render(r.section.Title) + styleDim.Render(fmt.Sprintf("  (%d)", count))
+}
+
+// itemLine renders one compact row: indent, cursor, ID, and short title.
+func (m *Model) itemLine(r visRow, cw int, selected bool) string {
+	mark := r.id
 	if mark == "" {
 		mark = "·"
 	}
-	cursor := "  "
+	cur := "  "
 	if selected {
-		cursor = styleCursor.Render("▸ ")
+		cur = styleCursor.Render("▸ ")
 	}
-	dot := " "
-	if it.Claimed {
-		dot = styleClaim.Render("●")
-	}
-
-	title := truncate(it.Title, max(1, min(cw-8, titleWidth)))
+	title := truncate(r.item.Title, max(1, min(cw-9, titleWidth)))
 	style := styleItem
 	if selected {
 		style = styleSelect
 	}
-	return cursor + styleID.Render(fmt.Sprintf("%-3s", mark)) + " " + dot + " " + style.Render(title)
+	return "  " + cur + styleID.Render(fmt.Sprintf("%-3s", mark)) + " " + style.Render(title)
 }
 
-// detailBody renders the selected task's detail for the DETAIL panel: a header
-// line, the title, the dimmed description, then tags/ref.
+// detailBody renders the selected row's detail: a section summary for a header,
+// or the item's header line, title, dimmed description, and tags/ref.
 func (m *Model) detailBody(cw, height int) string {
 	r, ok := m.selectedRow()
 	if !ok {
-		return strings.Join(padLines([]string{styleDim.Render("No task selected.")}, height), "\n")
+		return strings.Join(padLines([]string{styleDim.Render("Nothing selected.")}, height), "\n")
 	}
-	it := r.item
 
+	if r.header {
+		count := len(m.list.Section(m.svc.Schema(), r.section.Key))
+		state := "expanded"
+		if m.collapsed[r.section.Key] {
+			state = "collapsed"
+		}
+		lines := []string{
+			sectionStyle(r.secIdx).Bold(true).Render(r.section.Title),
+			"",
+			styleDim.Render(fmt.Sprintf("%d item(s) · %s · space to fold", count, state)),
+		}
+		return strings.Join(padLines(lines, height), "\n")
+	}
+
+	it := r.item
 	id := r.id
 	if id == "" {
-		id = "done"
+		id = "·"
 	}
 	bits := []string{styleID.Render(id), styleDim.Render(r.section.Title)}
-	if it.Claimed {
-		bits = append(bits, styleClaim.Render("claimed"))
-	}
 	if it.DoneDate != "" {
 		bits = append(bits, styleDim.Render("done "+firstDate(it.DoneDate)))
 	}

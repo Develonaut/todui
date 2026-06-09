@@ -71,7 +71,7 @@ func TestCompleteStampsDateAndTime(t *testing.T) {
 	}
 }
 
-func TestStartWithoutStartSectionJustClaims(t *testing.T) {
+func TestStartWithoutStartSectionIsNoop(t *testing.T) {
 	svc, _ := testSvc("")
 	if _, err := svc.Add(todo.Item{Title: "a", Section: "now"}); err != nil {
 		t.Fatal(err)
@@ -80,8 +80,8 @@ func TestStartWithoutStartSectionJustClaims(t *testing.T) {
 		t.Fatal(err)
 	}
 	l, _ := svc.List()
-	if l.Items[0].Section != "now" || !l.Items[0].Claimed {
-		t.Errorf("start (no start section): %+v", l.Items[0])
+	if l.Items[0].Section != "now" {
+		t.Errorf("start (no start section) should leave section: %+v", l.Items[0])
 	}
 }
 
@@ -94,7 +94,7 @@ func TestStartMovesToStartSection(t *testing.T) {
 		t.Fatal(err)
 	}
 	l, _ := svc.List()
-	if l.Items[0].Section != "in_progress" || !l.Items[0].Claimed {
+	if l.Items[0].Section != "in_progress" {
 		t.Errorf("start (with start section): %+v", l.Items[0])
 	}
 }

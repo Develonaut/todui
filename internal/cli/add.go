@@ -11,7 +11,7 @@ type addCmd struct{}
 
 func (addCmd) Name() string { return "add" }
 func (addCmd) Usage() string {
-	return "add <title...> [--desc D] [--section S] [--tag T]... [--ado REF] [--claimed]"
+	return "add <title...> [--desc D] [--section S] [--tag T]... [--ado REF]"
 }
 
 func (addCmd) Run(cx *Context, args []string) error {
@@ -19,7 +19,6 @@ func (addCmd) Run(cx *Context, args []string) error {
 	section := fs.String("section", "", "section key (default: first non-done)")
 	desc := fs.String("desc", "", "fuller description")
 	ado := fs.String("ado", "", "leading reference token (e.g. #123)")
-	claimed := fs.Bool("claimed", false, "mark as claimed")
 	var tags multiFlag
 	fs.Var(&tags, "tag", "tag slug (repeatable)")
 	pos, err := parseArgs(fs, args)
@@ -47,7 +46,7 @@ func (addCmd) Run(cx *Context, args []string) error {
 	}
 
 	id, err := cx.Svc.Add(todo.Item{
-		Title: title, Description: description, ADO: *ado, Tags: tags, Claimed: *claimed, Section: sec,
+		Title: title, Description: description, ADO: *ado, Tags: tags, Section: sec,
 	})
 	if err != nil {
 		return err

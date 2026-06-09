@@ -28,15 +28,6 @@ func (l *List) Delete(idx int) error {
 	return nil
 }
 
-// SetClaimed sets the claimed flag on the item at idx.
-func (l *List) SetClaimed(idx int, claimed bool) error {
-	if err := l.inRange(idx); err != nil {
-		return err
-	}
-	l.Items[idx].Claimed = claimed
-	return nil
-}
-
 // nextOrder returns one past the highest Order currently used in a section,
 // ignoring the item at skip (use -1 to ignore none).
 func (l *List) nextOrder(section string, skip int) int {

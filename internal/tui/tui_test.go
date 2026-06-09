@@ -48,30 +48,29 @@ func TestViewRenders(t *testing.T) {
 	if !v.AltScreen {
 		t.Error("expected full-screen view")
 	}
-	for _, want := range []string{"todui", "Now", "first", "Next", "second"} {
+	for _, want := range []string{"Now", "first", "Next", "second"} {
 		if !strings.Contains(v.Content, want) {
 			t.Errorf("view missing %q:\n%s", want, v.Content)
 		}
 	}
 }
 
-func TestDispatchNavigateAndComplete(t *testing.T) {
+func TestDispatchComplete(t *testing.T) {
 	m := testModel(t)
-	if m.cursor != 0 {
-		t.Fatalf("cursor = %d, want 0", m.cursor)
-	}
-	m.dispatch(actDown)
-	if m.cursor != 1 || m.rows[m.cursor].item.Title != "second" {
-		t.Fatalf("after down: cursor=%d task=%q", m.cursor, m.rows[m.cursor].item.Title)
+	if !cursorTo(m, "second") {
+		t.Fatal("could not place cursor on 'second'")
 	}
 	m.dispatch(actComplete)
-	if it, ok := find(m, "second"); !ok || it.section.Key != "done" {
-		t.Errorf("second should be done after complete")
+	if !inDone(m, "second") {
+		t.Errorf("'second' should be in done after complete:\n%+v", m.list.Items)
 	}
 }
 
 func TestDispatchDeleteWithConfirm(t *testing.T) {
 	m := testModel(t)
+	if !cursorTo(m, "first") {
+		t.Fatal("could not place cursor on 'first'")
+	}
 	m.dispatch(actDelete)
 	if m.mode != modeConfirm || m.confirmID == "" {
 		t.Fatalf("delete should enter confirm mode")
@@ -80,27 +79,52 @@ func TestDispatchDeleteWithConfirm(t *testing.T) {
 	if m.mode != modeList {
 		t.Errorf("confirm yes should return to list")
 	}
-	if _, ok := find(m, "first"); ok {
-		t.Errorf("first should be deleted")
+	for _, it := range m.list.Items {
+		if it.Title == "first" {
+			t.Errorf("'first' should be deleted")
+		}
+	}
+}
+
+func TestCollapseFoldsSection(t *testing.T) {
+	m := testModel(t)
+	m.cursor = 0 // first row is the "now" header
+	if got := m.activeScopes(); got[0] != scopeHeader {
+		t.Fatalf("on a header, top scope = %q, want header", got[0])
+	}
+	before := len(m.rows)
+	m.dispatch(actCollapse)
+	if !m.collapsed["now"] || len(m.rows) >= before {
+		t.Errorf("collapsing 'now' should hide its items (rows %d -> %d)", before, len(m.rows))
 	}
 }
 
 func TestActiveScopesByContext(t *testing.T) {
 	m := testModel(t)
-	if got := m.activeScopes(); got[0] != scopeItem {
-		t.Errorf("with items, top scope = %q, want item", got[0])
+	if got := m.activeScopes(); got[0] != scopeItem { // cursor starts on first item
+		t.Errorf("on an item, top scope = %q, want item", got[0])
 	}
 	m.rows = nil
 	if got := m.activeScopes(); got[0] != scopeEmpty {
-		t.Errorf("with no items, top scope = %q, want empty", got[0])
+		t.Errorf("with no rows, top scope = %q, want empty", got[0])
 	}
 }
 
-func find(m *Model, sub string) (visRow, bool) {
-	for _, r := range m.rows {
-		if strings.Contains(r.item.Title, sub) {
-			return r, true
+func cursorTo(m *Model, title string) bool {
+	for i, r := range m.rows {
+		if !r.header && r.item.Title == title {
+			m.cursor = i
+			return true
 		}
 	}
-	return visRow{}, false
+	return false
+}
+
+func inDone(m *Model, title string) bool {
+	for _, it := range m.list.Items {
+		if it.Title == title && it.Section == "done" {
+			return true
+		}
+	}
+	return false
 }

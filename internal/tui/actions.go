@@ -2,7 +2,7 @@ package tui
 
 // complete marks the selected item done.
 func (m *Model) complete() {
-	r, ok := m.selectedRow()
+	r, ok := m.currentItem()
 	if !ok {
 		return
 	}
@@ -10,9 +10,9 @@ func (m *Model) complete() {
 	m.rebuild()
 }
 
-// start claims the selected item.
+// start claims the selected item (moves it to the start section).
 func (m *Model) start() {
-	r, ok := m.selectedRow()
+	r, ok := m.currentItem()
 	if !ok {
 		return
 	}
@@ -22,8 +22,8 @@ func (m *Model) start() {
 
 // reorder shifts the selected item within its section and follows it.
 func (m *Model) reorder(delta int) {
-	r, ok := m.selectedRow()
-	if !ok || r.id == "" {
+	r, ok := m.currentItem()
+	if !ok {
 		return
 	}
 	if err := m.svc.Reorder(r.id, delta); err != nil {
@@ -36,8 +36,8 @@ func (m *Model) reorder(delta int) {
 
 // moveSection moves the selected item to the adjacent non-done section.
 func (m *Model) moveSection(dir int) {
-	r, ok := m.selectedRow()
-	if !ok || r.id == "" {
+	r, ok := m.currentItem()
+	if !ok {
 		return
 	}
 	open := m.openSections()
@@ -67,9 +67,27 @@ func (m *Model) openSections() []string {
 	return keys
 }
 
+// toggleCollapse folds or unfolds the section under the cursor, keeping the
+// cursor on that section's header.
+func (m *Model) toggleCollapse() {
+	r, ok := m.selectedRow()
+	if !ok {
+		return
+	}
+	key := r.section.Key
+	m.collapsed[key] = !m.collapsed[key]
+	m.rebuild()
+	m.cursorToSection(key)
+}
+
+// goalBy adjusts the daily goal, clamped to a sane range.
+func (m *Model) goalBy(delta int) {
+	m.goal = clamp(m.goal+delta, 0, 99)
+}
+
 // beginDelete enters the delete-confirmation mode for the selected item.
 func (m *Model) beginDelete() {
-	if r, ok := m.selectedRow(); ok {
+	if r, ok := m.currentItem(); ok {
 		m.confirmID, m.mode = r.id, modeConfirm
 	}
 }

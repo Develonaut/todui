@@ -5,7 +5,7 @@ _IDs: Now `N·` Next `X·`._
 _Last updated: 2026-06-09 09:37 (via tool)_
 
 ## In Progress
-- [ ] **PA** **CLAIMED** Ship the thing — blocked on review. PR !123 in `~/code/x` `[work]` `[urgent]`
+- [ ] **PA** Ship the thing — blocked on review. PR !123 in `~/code/x` `[work]` `[urgent]`
 
 ## Now
 - [ ] **NA** #42 wire up `the-widget` → bump dep (under #10). `[dep]`

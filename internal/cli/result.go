@@ -15,7 +15,6 @@ type row struct {
 	Description string   `json:"description,omitempty"`
 	Tags        []string `json:"tags,omitempty"`
 	ADO         string   `json:"ado,omitempty"`
-	Claimed     bool     `json:"claimed,omitempty"`
 	Section     string   `json:"section"`
 	Done        string   `json:"done_date,omitempty"`
 }
@@ -27,7 +26,7 @@ func rowsFor(l todo.List, s todo.Schema) []row {
 		it := l.Items[i]
 		rows = append(rows, row{
 			ID: l.ComputeID(s, i), Title: it.Title, Description: it.Description, Tags: it.Tags,
-			ADO: it.ADO, Claimed: it.Claimed, Section: it.Section, Done: it.DoneDate,
+			ADO: it.ADO, Section: it.Section, Done: it.DoneDate,
 		})
 	}
 	return rows
@@ -78,9 +77,6 @@ func (cx *Context) printList(l todo.List, only string) {
 				mark = "✓"
 			}
 			fmt.Fprintf(cx.Out, "  %-3s %s", mark, it.Title)
-			if it.Claimed {
-				fmt.Fprint(cx.Out, "  *claimed*")
-			}
 			for _, tag := range it.Tags {
 				fmt.Fprintf(cx.Out, " [%s]", tag)
 			}

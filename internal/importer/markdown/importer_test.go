@@ -59,8 +59,8 @@ func TestImportExtractsFields(t *testing.T) {
 		t.Errorf("last updated = %q", list.LastUpdated)
 	}
 
-	if it, ok := find(list, "Ship the thing"); !ok || !it.Claimed || strings.Join(it.Tags, ",") != "work,urgent" {
-		t.Errorf("claimed item = %+v", it)
+	if it, ok := find(list, "Ship the thing"); !ok || strings.Join(it.Tags, ",") != "work,urgent" {
+		t.Errorf("tagged item = %+v", it)
 	}
 	if it, ok := find(list, "wire up"); !ok || it.ADO != "#42" || strings.Join(it.Tags, ",") != "dep" {
 		t.Errorf("ado item = %+v", it)

@@ -19,7 +19,6 @@ type Item struct {
 	Description string   `toml:"description,omitempty"`
 	Tags        []string `toml:"tags,omitempty"`
 	ADO         string   `toml:"ado,omitempty"`
-	Claimed     bool     `toml:"claimed,omitempty"`
 	Section     string   `toml:"section"`
 	Order       int      `toml:"order"`
 	DoneDate    string   `toml:"done_date,omitempty"`

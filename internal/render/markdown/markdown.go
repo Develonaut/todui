@@ -1,6 +1,5 @@
 // Package markdown renders a todo.List as a Markdown document — the read-only
-// mirror — reproducing positional IDs, the CLAIMED marker, tags, and the
-// section layout.
+// mirror — reproducing positional IDs, tags, and the section layout.
 package markdown
 
 import (
@@ -62,9 +61,6 @@ func (r *Renderer) renderItem(sec todo.Section, it todo.Item) string {
 	b.WriteString("- [ ] **")
 	b.WriteString(r.schema.ID(sec, it.Order))
 	b.WriteString("** ")
-	if it.Claimed {
-		b.WriteString("**CLAIMED** ")
-	}
 	if it.ADO != "" {
 		b.WriteString(it.ADO)
 		b.WriteByte(' ')

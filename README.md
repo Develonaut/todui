@@ -41,6 +41,7 @@ Everything user-specific is configuration, not code. `~/.config/todui/config.tom
 ```toml
 store  = "~/.local/share/todui/todo.toml"   # where tasks live
 # mirror = "~/notes/TODO.md"                 # optional read-only Markdown view
+goal_today = 3                               # daily completion goal (progress bar)
 
 [[section]]  key = "now"    title = "Now"    letter = "N"
 [[section]]  key = "next"   title = "Next"   letter = "X"
@@ -77,10 +78,12 @@ Every command supports `--json` for scripting.
 
 ## Keybindings (TUI)
 
-`↑`/`↓` navigate · `←`/`→` section · `space` done · `a` add · `e` edit ·
-`d` delete · `s` start · `⇧↑`/`⇧↓` reorder · `⇧←`/`⇧→` move to section ·
-`?` help · `q` quit. (Vim keys `j`/`k`/`h`/`l` and `Tab` work too — they're
-just not advertised in the help bar.)
+`↑`/`↓` navigate · `←`/`→` section · `space` done (on an item) or fold/unfold
+(on a section header) · `a` add · `e` edit · `d` delete · `s` start ·
+`⇧↑`/`⇧↓` reorder · `⇧←`/`⇧→` move to section · `+`/`-` adjust goal ·
+`?` help · `q` quit. (Vim keys `j`/`k`/`h`/`l` and `Tab` work too — just not
+advertised.) The Done section starts collapsed; a magenta→purple progress bar
+tracks your daily goal.
 
 Keybindings are **contextual and fully remappable**. They are organized into
 scopes (`global`, `list`, `item`, `confirm`); the active scope stack drives both

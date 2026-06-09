@@ -15,6 +15,7 @@ type Config struct {
 	Mirror       string       `toml:"mirror,omitempty"`
 	StartSection string       `toml:"start_section,omitempty"`
 	Header       []string     `toml:"header,omitempty"`
+	GoalToday    int          `toml:"goal_today,omitempty"` // daily completion goal for the TUI
 	Sections     []SectionDef `toml:"section"`
 	Done         DoneConfig   `toml:"done"`
 	// Keys holds optional TUI keybinding overrides: scope -> action -> keys.

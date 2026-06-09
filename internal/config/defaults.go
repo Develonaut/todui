@@ -32,7 +32,8 @@ func DefaultPath() string {
 // The default flow is Now / Next / Later / Done.
 func Default() Config {
 	return Config{
-		Store: filepath.Join(dataDir(), "todo.toml"),
+		Store:     filepath.Join(dataDir(), "todo.toml"),
+		GoalToday: 3,
 		Sections: []SectionDef{
 			{Key: "now", Title: "Now", Letter: "N"},
 			{Key: "next", Title: "Next", Letter: "X"},

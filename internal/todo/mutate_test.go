@@ -39,13 +39,3 @@ func TestDelete(t *testing.T) {
 		t.Error("Delete out of range should error")
 	}
 }
-
-func TestSetClaimed(t *testing.T) {
-	l := sample()
-	if err := l.SetClaimed(0, true); err != nil {
-		t.Fatal(err)
-	}
-	if !l.Items[0].Claimed {
-		t.Error("SetClaimed(true) did not set flag")
-	}
-}

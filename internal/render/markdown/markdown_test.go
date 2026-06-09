@@ -23,7 +23,7 @@ func TestRender(t *testing.T) {
 		Header:      []string{"# TODO", "", "_subtitle_"},
 		LastUpdated: "2026-06-09 08:50",
 		Items: []todo.Item{
-			{Title: "claimed one", Section: "in_progress", Claimed: true},
+			{Title: "first ip item", Section: "in_progress"},
 			{Title: "first", Section: "now", ADO: "#1", Tags: []string{"x"}},
 			{Title: "second", Section: "now"},
 			{Title: "ctx", Section: "next", Description: "because"},
@@ -39,7 +39,7 @@ func TestRender(t *testing.T) {
 		"_Last updated: 2026-06-09 08:50_",
 		"",
 		"## In Progress",
-		"- [ ] **PA** **CLAIMED** claimed one",
+		"- [ ] **PA** first ip item",
 		"",
 		"## Now",
 		"- [ ] **NA** #1 first `[x]`",

@@ -21,6 +21,7 @@ type Settings struct {
 	StartSection string
 	DoneMax      int
 	DoneAge      int
+	Goal         int // daily completion goal (0 = none)
 }
 
 // Service exposes task use-cases over a repository and a clock.
@@ -37,6 +38,9 @@ func NewService(repo ports.Repository, clk ports.Clock, set Settings) *Service {
 
 // Schema returns the section schema in use, for display and ID computation.
 func (s *Service) Schema() todo.Schema { return s.set.Schema }
+
+// Goal returns the configured daily completion goal (0 if none).
+func (s *Service) Goal() int { return s.set.Goal }
 
 // List returns the current tasks, normalized so positional IDs are stable.
 func (s *Service) List() (todo.List, error) {
@@ -85,15 +89,14 @@ func (s *Service) Complete(id string) error {
 	})
 }
 
-// Start moves the item into the start section (when configured) and claims it.
+// Start moves the item into the configured start section (e.g. In Progress);
+// being there is the "claim". With no start section configured it is a no-op.
 func (s *Service) Start(id string) error {
 	return s.mutate(id, func(l *todo.List, idx int) error {
-		if s.set.StartSection != "" {
-			if err := l.Move(s.set.Schema, idx, s.set.StartSection); err != nil {
-				return err
-			}
+		if s.set.StartSection == "" {
+			return nil
 		}
-		return l.SetClaimed(idx, true)
+		return l.Move(s.set.Schema, idx, s.set.StartSection)
 	})
 }
 

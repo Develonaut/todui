@@ -12,6 +12,7 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.WindowSizeMsg:
 		m.width, m.height = msg.Width, msg.Height
+		m.progress.SetWidth(clamp(m.width/4, 12, 28))
 		if m.form != nil {
 			m.form = m.form.WithWidth(formWidth(m.width)).WithHeight(formHeight(m.height))
 		}
@@ -81,6 +82,9 @@ func (m *Model) buildActions() map[string]func() tea.Cmd {
 		actDelete:      none(m.beginDelete),
 		actConfirmYes:  none(m.confirmDelete),
 		actConfirmNo:   none(m.cancelDelete),
+		actCollapse:    none(m.toggleCollapse),
+		actGoalUp:      none(func() { m.goalBy(1) }),
+		actGoalDown:    none(func() { m.goalBy(-1) }),
 	}
 }
 

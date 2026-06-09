@@ -2,35 +2,37 @@ package tui
 
 import "charm.land/lipgloss/v2"
 
-// A deliberately quiet, muted palette for a dark terminal. Body text sits in
-// soft grays; accents are desaturated so nothing shouts. The detail pane is
-// dimmer than the list so the selected row stays the focus.
+// A vibrant, Charm/Crush-flavored palette: magenta and purple accents on a dark
+// background, with soft-lavender body text. The detail body stays dimmer than
+// the list so the selected row remains the focus.
 var (
-	styleTitle   = lipgloss.NewStyle().Foreground(lipgloss.Color("110")) // app name, soft blue
-	styleDim     = lipgloss.NewStyle().Foreground(lipgloss.Color("240")) // metadata, counts
-	styleFaint   = lipgloss.NewStyle().Foreground(lipgloss.Color("237")) // rules, separators
-	styleID      = lipgloss.NewStyle().Foreground(lipgloss.Color("67"))  // ids, muted blue
-	styleItem    = lipgloss.NewStyle().Foreground(lipgloss.Color("245")) // unselected titles, soft gray
-	styleSelect  = lipgloss.NewStyle().Foreground(lipgloss.Color("253")) // selected title, soft white
-	styleCursor  = lipgloss.NewStyle().Foreground(lipgloss.Color("110")) // cursor arrow
-	styleClaim   = lipgloss.NewStyle().Foreground(lipgloss.Color("137")) // claimed dot, muted amber
-	styleTag     = lipgloss.NewStyle().Foreground(lipgloss.Color("66"))  // tags, muted teal
-	styleDetail  = lipgloss.NewStyle().Foreground(lipgloss.Color("244")) // detail body, subtle
-	styleKey     = lipgloss.NewStyle().Foreground(lipgloss.Color("245")) // help keys
-	styleErr     = lipgloss.NewStyle().Foreground(lipgloss.Color("174")) // muted red
-	styleStatus  = lipgloss.NewStyle().Foreground(lipgloss.Color("108")) // muted green
-	styleConfirm = lipgloss.NewStyle().Foreground(lipgloss.Color("179")) // muted amber
+	styleDim     = lipgloss.NewStyle().Foreground(lipgloss.Color("#6C6C7E")) // metadata, counts
+	styleFaint   = lipgloss.NewStyle().Foreground(lipgloss.Color("#44444E")) // separators
+	styleID      = lipgloss.NewStyle().Foreground(lipgloss.Color("#9D7CFF")) // ids, violet
+	styleItem    = lipgloss.NewStyle().Foreground(lipgloss.Color("#C8C8D8")) // unselected titles
+	styleSelect  = lipgloss.NewStyle().Foreground(lipgloss.Color("#FAFAFA")).Bold(true)
+	styleCursor  = lipgloss.NewStyle().Foreground(lipgloss.Color("#FF5FD2")) // cursor arrow, magenta
+	styleTag     = lipgloss.NewStyle().Foreground(lipgloss.Color("#00D7AF")) // tags, teal
+	styleDetail  = lipgloss.NewStyle().Foreground(lipgloss.Color("#9A9AB0")) // detail body
+	styleKey     = lipgloss.NewStyle().Foreground(lipgloss.Color("#FF5FD2")) // help keys, magenta
+	styleErr     = lipgloss.NewStyle().Foreground(lipgloss.Color("#FF5F87"))
+	styleStatus  = lipgloss.NewStyle().Foreground(lipgloss.Color("#00D787"))
+	styleConfirm = lipgloss.NewStyle().Foreground(lipgloss.Color("#FFD75F"))
 
-	styleBorder       = lipgloss.NewStyle().Foreground(lipgloss.Color("238")) // inactive frame
-	styleBorderActive = lipgloss.NewStyle().Foreground(lipgloss.Color("67"))  // focused frame
-	styleLabel        = lipgloss.NewStyle().Foreground(lipgloss.Color("246")).Bold(true)
+	styleBorderActive = lipgloss.NewStyle().Foreground(lipgloss.Color("#FF5FD2")) // focused frame, magenta
+	styleBorder       = lipgloss.NewStyle().Foreground(lipgloss.Color("#44444E")) // inactive frame
+	styleLabel        = lipgloss.NewStyle().Foreground(lipgloss.Color("#9D7CFF")).Bold(true)
 )
 
-// sectionAccents desaturate the section headers (the emoji already carry the
-// strong color cue, so the text stays quiet).
-var sectionAccents = []string{"67", "108", "137", "244", "108"}
+// sectionAccents give each section a vibrant header color (the emoji carry the
+// cue too). Order matches the typical In Progress / Now / Next / Later / Done.
+var sectionAccents = []string{"#FF5FD2", "#00D787", "#00E5FF", "#9D7CFF", "#6C6C7E"}
 
-// sectionStyle returns the muted header style for the section at display index i.
+// sectionStyle returns the header color for the section at display index i.
 func sectionStyle(i int) lipgloss.Style {
 	return lipgloss.NewStyle().Foreground(lipgloss.Color(sectionAccents[i%len(sectionAccents)]))
 }
+
+// logoColors are the per-letter gradient stops for the TODUI wordmark
+// (magenta → purple).
+var logoColors = []string{"#FF06B7", "#E63DD9", "#C84BEC", "#A453F4", "#7D56F4"}

@@ -63,14 +63,13 @@ func Import(src []byte, schema todo.Schema) (todo.List, error) {
 	return list, nil
 }
 
-// parseOpen extracts an open item: leading ID, optional CLAIMED marker, optional
-// leading reference, and trailing tags. The remainder is the task (no attempt is
-// made to split out context — that would be ambiguous).
+// parseOpen extracts an open item: leading ID, an optional (now-legacy) CLAIMED
+// marker that is stripped and discarded, an optional leading reference, and
+// trailing tags. The remainder splits into title and description.
 func parseOpen(s, section string, order map[string]int) todo.Item {
 	it := todo.Item{Section: section}
 	s = reID.ReplaceAllString(s, "")
 	if strings.HasPrefix(s, claimedToken) {
-		it.Claimed = true
 		s = strings.TrimSpace(strings.TrimPrefix(s, claimedToken))
 	}
 	if m := reLeadADO.FindStringSubmatch(s); m != nil {

@@ -13,7 +13,6 @@ import (
 func (m *Model) enterAdd() tea.Cmd {
 	m.editID, m.editSec = "", ""
 	m.fTitle, m.fDesc, m.fTags, m.fADO = "", "", "", ""
-	m.fClaimed = false
 	m.fSection = m.defaultFormSection()
 	m.form = m.buildForm()
 	m.mode = modeForm
@@ -31,7 +30,6 @@ func (m *Model) enterEdit() tea.Cmd {
 	m.fDesc = r.item.Description
 	m.fTags = strings.Join(r.item.Tags, ", ")
 	m.fADO = r.item.ADO
-	m.fClaimed = r.item.Claimed
 	m.fSection = r.section.Key
 	m.form = m.buildForm()
 	m.mode = modeForm
@@ -60,7 +58,6 @@ func (m *Model) buildForm() *huh.Form {
 			huh.NewInput().Title("Tags (comma-separated)").Value(&m.fTags),
 			huh.NewInput().Title("Reference").Placeholder("#123").Value(&m.fADO),
 			huh.NewSelect[string]().Title("Section").Options(opts...).Value(&m.fSection),
-			huh.NewConfirm().Title("Claimed?").Value(&m.fClaimed),
 		),
 	).WithWidth(formWidth(m.width)).WithHeight(formHeight(m.height))
 }
@@ -74,7 +71,7 @@ func (m *Model) applyForm() {
 		}
 		_, err := m.svc.Add(todo.Item{
 			Title: m.fTitle, Description: m.fDesc, Tags: tags, ADO: m.fADO,
-			Claimed: m.fClaimed, Section: m.fSection,
+			Section: m.fSection,
 		})
 		m.result("Added", err)
 		return
@@ -85,7 +82,6 @@ func (m *Model) applyForm() {
 		it.Description = m.fDesc
 		it.Tags = tags
 		it.ADO = m.fADO
-		it.Claimed = m.fClaimed
 	})
 	if err == nil && m.fSection != "" && m.fSection != m.editSec {
 		err = m.svc.Move(m.editID, m.fSection)

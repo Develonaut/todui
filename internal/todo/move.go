@@ -48,7 +48,6 @@ func (l *List) Complete(s Schema, idx int, date string) error {
 		return fmt.Errorf("todo: schema has no done section")
 	}
 	l.Items[idx].Section = doneKey
-	l.Items[idx].Claimed = false
 	l.Items[idx].DoneDate = date
 	l.Items[idx].Order = 0
 	return nil

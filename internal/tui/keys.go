@@ -23,6 +23,9 @@ const (
 	actQuit        = "quit"
 	actConfirmYes  = "confirm.yes"
 	actConfirmNo   = "confirm.no"
+	actCollapse    = "collapse"
+	actGoalUp      = "goal.up"
+	actGoalDown    = "goal.down"
 )
 
 // Scope names for the active stack.
@@ -30,6 +33,7 @@ const (
 	scopeGlobal  = "global"
 	scopeList    = "list"
 	scopeItem    = "item"
+	scopeHeader  = "header"
 	scopeEmpty   = "empty"
 	scopeConfirm = "confirm"
 )
@@ -41,6 +45,8 @@ const (
 func defaultKeymap() *keymap.Keymap {
 	return keymap.New(
 		keymap.Layer{Scope: scopeGlobal, Bindings: []keymap.Binding{
+			{Action: actGoalUp, Keys: []string{"+", "="}, Hidden: true},
+			{Action: actGoalDown, Keys: []string{"-", "_"}, Hidden: true},
 			{Action: actHelp, Keys: []string{"?"}, Help: "help"},
 			{Action: actReload, Keys: []string{"r"}, Help: "reload", Hidden: true},
 			{Action: actQuit, Keys: []string{"q", "ctrl+c"}, Help: "quit"},
@@ -62,6 +68,9 @@ func defaultKeymap() *keymap.Keymap {
 			{Action: actMovePrev, Keys: []string{"shift+left", "H"}, Hidden: true},
 			{Action: actMoveNext, Keys: []string{"shift+right", "L"}, Help: "move", HelpKey: "⇧←→"},
 		}},
+		keymap.Layer{Scope: scopeHeader, Bindings: []keymap.Binding{
+			{Action: actCollapse, Keys: []string{"space", " ", "enter"}, Help: "fold", HelpKey: "space"},
+		}},
 		keymap.Layer{Scope: scopeEmpty, Bindings: nil},
 		keymap.Layer{Scope: scopeConfirm, Bindings: []keymap.Binding{
 			{Action: actConfirmYes, Keys: []string{"y"}, Help: "yes"},
@@ -78,6 +87,9 @@ func (m *Model) activeScopes() []string {
 	case modeList:
 		if len(m.rows) == 0 {
 			return []string{scopeEmpty, scopeList, scopeGlobal}
+		}
+		if r, ok := m.selectedRow(); ok && r.header {
+			return []string{scopeHeader, scopeList, scopeGlobal}
 		}
 		return []string{scopeItem, scopeList, scopeGlobal}
 	default:
