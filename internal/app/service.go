@@ -100,10 +100,20 @@ func (s *Service) Start(id string) error {
 	})
 }
 
-// Move relocates the item to another section.
+// Move relocates the item to another section. Moving into the done section
+// stamps today's date if absent; moving out of done clears it.
 func (s *Service) Move(id, section string) error {
 	return s.mutate(id, func(l *todo.List, idx int) error {
-		return l.Move(s.set.Schema, idx, section)
+		if err := l.Move(s.set.Schema, idx, section); err != nil {
+			return err
+		}
+		switch doneKey := s.set.Schema.DoneKey(); {
+		case section == doneKey && l.Items[idx].DoneDate == "":
+			l.Items[idx].DoneDate = s.clk.Now().Format(dateLayout)
+		case section != doneKey:
+			l.Items[idx].DoneDate = ""
+		}
+		return nil
 	})
 }
 

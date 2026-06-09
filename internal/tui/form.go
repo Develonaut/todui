@@ -69,6 +69,7 @@ func (m *Model) applyForm() {
 		if strings.TrimSpace(m.fTitle) == "" {
 			return
 		}
+		m.snapshot()
 		_, err := m.svc.Add(todo.Item{
 			Title: m.fTitle, Description: m.fDesc, Tags: tags, ADO: m.fADO,
 			Section: m.fSection,
@@ -77,6 +78,7 @@ func (m *Model) applyForm() {
 		return
 	}
 
+	m.snapshot()
 	err := m.svc.Edit(m.editID, func(it *todo.Item) {
 		it.Title = m.fTitle
 		it.Description = m.fDesc

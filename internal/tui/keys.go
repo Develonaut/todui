@@ -18,6 +18,7 @@ const (
 	actReorderDown = "reorder.down"
 	actMovePrev    = "move.prev"
 	actMoveNext    = "move.next"
+	actUndo        = "undo"
 	actReload      = "reload"
 	actHelp        = "help"
 	actQuit        = "quit"
@@ -49,6 +50,7 @@ func defaultKeymap() *keymap.Keymap {
 		keymap.Layer{Scope: scopeGlobal, Bindings: []keymap.Binding{
 			{Action: actGoalUp, Keys: []string{"+", "="}, Hidden: true},
 			{Action: actGoalDown, Keys: []string{"-", "_"}, Hidden: true},
+			{Action: actUndo, Keys: []string{"u", "ctrl+z"}, Help: "undo"},
 			{Action: actHelp, Keys: []string{"?"}, Help: "help"},
 			{Action: actReload, Keys: []string{"r"}, Help: "reload", Hidden: true},
 			{Action: actQuit, Keys: []string{"q", "ctrl+c"}, Help: "quit"},

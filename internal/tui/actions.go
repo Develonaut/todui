@@ -1,11 +1,38 @@
 package tui
 
+import "github.com/develonaut/todui/internal/todo"
+
+// snapshot saves the current list so the change about to happen can be undone.
+func (m *Model) snapshot() {
+	cp := m.list
+	cp.Items = append([]todo.Item(nil), m.list.Items...)
+	cp.Header = append([]string(nil), m.list.Header...)
+	const maxUndo = 50
+	m.undo = append(m.undo, cp)
+	if len(m.undo) > maxUndo {
+		m.undo = m.undo[len(m.undo)-maxUndo:]
+	}
+}
+
+// undoLast reverts the most recent change.
+func (m *Model) undoLast() {
+	if len(m.undo) == 0 {
+		m.status, m.err = "nothing to undo", nil
+		return
+	}
+	prev := m.undo[len(m.undo)-1]
+	m.undo = m.undo[:len(m.undo)-1]
+	m.result("Undid last change", m.svc.Replace(prev))
+	m.rebuild()
+}
+
 // complete marks the selected item done.
 func (m *Model) complete() {
 	r, ok := m.currentItem()
 	if !ok {
 		return
 	}
+	m.snapshot()
 	m.result("Completed "+r.id, m.svc.Complete(r.id))
 	m.rebuild()
 }
@@ -16,6 +43,7 @@ func (m *Model) start() {
 	if !ok {
 		return
 	}
+	m.snapshot()
 	m.result("Started "+r.id, m.svc.Start(r.id))
 	m.rebuild()
 }
@@ -26,6 +54,7 @@ func (m *Model) reorder(delta int) {
 	if !ok {
 		return
 	}
+	m.snapshot()
 	if err := m.svc.Reorder(r.id, delta); err != nil {
 		m.err = err
 		return
@@ -34,25 +63,27 @@ func (m *Model) reorder(delta int) {
 	m.moveCursor(delta)
 }
 
-// moveSection moves the selected item to the adjacent non-done section.
+// moveSection moves the selected item to the adjacent section (any section,
+// including out of Done).
 func (m *Model) moveSection(dir int) {
 	r, ok := m.currentItem()
 	if !ok {
 		return
 	}
-	open := m.openSections()
+	secs := m.svc.Schema().Sections
 	ci := -1
-	for i, key := range open {
-		if key == r.section.Key {
+	for i := range secs {
+		if secs[i].Key == r.section.Key {
 			ci = i
 			break
 		}
 	}
 	ni := ci + dir
-	if ci < 0 || ni < 0 || ni >= len(open) {
+	if ci < 0 || ni < 0 || ni >= len(secs) {
 		return
 	}
-	m.result("Moved "+r.id+" → "+open[ni], m.svc.Move(r.id, open[ni]))
+	m.snapshot()
+	m.result("Moved "+r.id+" → "+secs[ni].Title, m.svc.Move(r.id, secs[ni].Key))
 	m.rebuild()
 }
 
@@ -133,6 +164,7 @@ func (m *Model) cancelDelete() {
 
 // confirmDelete removes the item pending confirmation.
 func (m *Model) confirmDelete() {
+	m.snapshot()
 	m.result("Deleted "+m.confirmID, m.svc.Delete(m.confirmID))
 	m.confirmID = ""
 	m.mode = modeList

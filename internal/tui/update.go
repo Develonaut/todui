@@ -21,6 +21,7 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		// Apply now in the list; defer while a form/confirm is open so an
 		// external write never yanks data out from under an edit.
 		if m.mode == modeList {
+			m.undo = nil // external change invalidates local snapshots
 			m.rebuild()
 		} else {
 			m.pendingReload = true
@@ -87,6 +88,7 @@ func (m *Model) buildActions() map[string]func() tea.Cmd {
 		actCollapse:    none(m.collapse),
 		actGoalUp:      none(func() { m.goalBy(1) }),
 		actGoalDown:    none(func() { m.goalBy(-1) }),
+		actUndo:        none(m.undoLast),
 	}
 }
 

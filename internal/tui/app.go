@@ -48,6 +48,7 @@ type Model struct {
 	cursor     int
 	listOffset int             // first visible list line (vertical scroll)
 	collapsed  map[string]bool // section key -> collapsed
+	undo       []todo.List     // snapshots for undo
 
 	goal     int            // daily completion goal
 	progress progress.Model // header progress bar
