@@ -11,7 +11,7 @@ import (
 )
 
 // View implements tea.Model. It composes child strings and wraps the result in
-// a single tea.View (full-screen).
+// a single full-screen tea.View.
 func (m *Model) View() tea.View {
 	var content string
 	if m.mode == modeForm && m.form != nil {
@@ -34,39 +34,74 @@ func (m *Model) viewForm() string {
 	return lipgloss.NewStyle().Margin(1, 2).Render(body)
 }
 
-// viewList renders the sectioned task list, footer, and help bar.
+// viewList renders the screen: a title bar, the scrollable sectioned list with
+// truncated titles, a detail pane for the selected task, then footer and help.
 func (m *Model) viewList() string {
-	s := m.svc.Schema()
-	var b strings.Builder
-
-	b.WriteString(styleTitle.Render("todui"))
-	if m.list.LastUpdated != "" {
-		b.WriteString("  " + styleDim.Render(m.list.LastUpdated))
+	w := m.width
+	if w <= 0 {
+		w = 80
 	}
-	b.WriteString("\n\n")
-
-	idx := 0
-	for i, sec := range s.Sections {
-		items := m.list.Section(s, sec.Key)
-		b.WriteString(sectionStyle(i).Render(sec.Title))
-		b.WriteString(styleDim.Render(fmt.Sprintf("  (%d)", len(items))))
-		b.WriteByte('\n')
-		for _, it := range items {
-			b.WriteString(m.renderRow(s, sec, it, idx == m.cursor))
-			b.WriteByte('\n')
-			idx++
-		}
-		b.WriteByte('\n')
+	h := m.height
+	if h <= 0 {
+		h = 24
 	}
 
-	b.WriteString(m.footer())
-	b.WriteByte('\n')
-	b.WriteString(m.helpBar())
-	return b.String()
+	detailH := clamp(h/4, 4, 8)
+	// chrome = title(1) + blank(1) + rule(1) + footer(1) + help(1)
+	listH := max(h-detailH-5, 3)
+
+	lines, cursorLine := m.listLines(w)
+	m.ensureVisible(cursorLine, listH, len(lines))
+	visible := padLines(window(lines, m.listOffset, listH), listH)
+
+	rule := styleDim.Render(strings.Repeat("─", min(w, 100)))
+	detail := padLines(strings.Split(m.detailPane(min(w, 100)), "\n"), detailH)
+
+	out := []string{m.titleBar()}
+	out = append(out, "")
+	out = append(out, visible...)
+	out = append(out, rule)
+	out = append(out, detail...)
+	out = append(out, m.footer(), m.helpBar(w))
+	return strings.Join(out, "\n")
 }
 
-// renderRow renders one item line.
-func (m *Model) renderRow(s todo.Schema, sec todo.Section, it todo.Item, selected bool) string {
+// titleBar renders the app name and last-updated stamp.
+func (m *Model) titleBar() string {
+	bar := styleTitle.Render("todui")
+	if m.list.LastUpdated != "" {
+		bar += "  " + styleDim.Render(m.list.LastUpdated)
+	}
+	return bar
+}
+
+// listLines builds every list line (section headers and truncated item rows)
+// and reports which line the cursor is on.
+func (m *Model) listLines(w int) ([]string, int) {
+	s := m.svc.Schema()
+	var lines []string
+	cursorLine := 0
+	idx := 0
+	for i, sec := range s.Sections {
+		if i > 0 {
+			lines = append(lines, "")
+		}
+		items := m.list.Section(s, sec.Key)
+		lines = append(lines, sectionStyle(i).Render(sec.Title)+styleDim.Render(fmt.Sprintf("  (%d)", len(items))))
+		for _, it := range items {
+			if idx == m.cursor {
+				cursorLine = len(lines)
+			}
+			lines = append(lines, m.itemLine(s, sec, it, idx == m.cursor, w))
+			idx++
+		}
+	}
+	return lines, cursorLine
+}
+
+// itemLine renders one compact, single-line item: cursor, ID, claimed dot, and
+// a truncated title.
+func (m *Model) itemLine(s todo.Schema, sec todo.Section, it todo.Item, selected bool, w int) string {
 	mark := s.ID(sec, it.Order)
 	if mark == "" {
 		mark = "·"
@@ -75,22 +110,59 @@ func (m *Model) renderRow(s todo.Schema, sec todo.Section, it todo.Item, selecte
 	if selected {
 		cursor = styleCursor.Render("▸ ")
 	}
-	idCol := styleID.Render(fmt.Sprintf("%-3s", mark))
-
-	body := it.Task
+	claimed := " "
 	if it.Claimed {
-		body += " " + styleClaim.Render("CLAIMED")
+		claimed = styleClaim.Render("●")
 	}
-	for _, t := range it.Tags {
-		body += " " + styleTag.Render("["+t+"]")
+
+	title := truncate(shortTitle(it.Task), max(10, w-9))
+	if selected {
+		title = styleSelected.Render(title)
+	}
+	return cursor + styleID.Render(fmt.Sprintf("%-3s", mark)) + " " + claimed + " " + title
+}
+
+// detailPane renders the full detail of the selected task, wrapped to width.
+func (m *Model) detailPane(w int) string {
+	r, ok := m.selectedRow()
+	if !ok {
+		return styleDim.Render("No task selected.")
+	}
+	it := r.item
+
+	id := r.id
+	if id == "" {
+		id = "done"
+	}
+	bits := []string{styleID.Render(id), r.section.Title}
+	if it.Claimed {
+		bits = append(bits, styleClaim.Render("claimed"))
 	}
 	if it.DoneDate != "" {
-		body += " " + styleDim.Render("(done "+firstDate(it.DoneDate)+")")
+		bits = append(bits, styleDim.Render("done "+firstDate(it.DoneDate)))
 	}
-	if selected {
-		body = styleSelected.Render(body)
+
+	wrap := lipgloss.NewStyle().Width(w)
+	parts := []string{strings.Join(bits, styleDim.Render(" · ")), wrap.Render(it.Task)}
+
+	var meta []string
+	if it.Context != "" {
+		meta = append(meta, styleDim.Render("context: ")+it.Context)
 	}
-	return cursor + idCol + " " + body
+	if len(it.Tags) > 0 {
+		var tags []string
+		for _, t := range it.Tags {
+			tags = append(tags, styleTag.Render("["+t+"]"))
+		}
+		meta = append(meta, strings.Join(tags, " "))
+	}
+	if it.ADO != "" {
+		meta = append(meta, styleDim.Render("ref: ")+it.ADO)
+	}
+	if len(meta) > 0 {
+		parts = append(parts, wrap.Render(strings.Join(meta, "   ")))
+	}
+	return strings.Join(parts, "\n")
 }
 
 // footer renders the transient status / confirm / error line.
@@ -107,41 +179,34 @@ func (m *Model) footer() string {
 	}
 }
 
-// helpBar renders the context-appropriate keys, generated from the same keymap
-// used for dispatch.
-func (m *Model) helpBar() string {
-	var parts []string
-	for _, b := range m.keys.Help(m.activeScopes()) {
-		if len(b.Keys) == 0 {
+// helpBar renders the context-appropriate keys from the same keymap used for
+// dispatch, fitting as many as the width allows (measured ANSI-aware).
+func (m *Model) helpBar(w int) string {
+	var b strings.Builder
+	for _, bind := range m.keys.Help(m.activeScopes()) {
+		if len(bind.Keys) == 0 {
 			continue
 		}
-		parts = append(parts, styleKey.Render(keyLabel(b.Keys[0]))+" "+styleDim.Render(b.Help))
+		seg := styleKey.Render(keyLabel(bind.Keys[0])) + " " + styleDim.Render(bind.Help)
+		sep := ""
+		if b.Len() > 0 {
+			sep = "  "
+		}
+		if lipgloss.Width(b.String()+sep+seg) > w {
+			break
+		}
+		b.WriteString(sep + seg)
 	}
-	return strings.Join(parts, "  ")
+	return b.String()
 }
 
-// keyLabel prettifies a key string for display.
-func keyLabel(k string) string {
-	switch k {
-	case " ", "space":
-		return "space"
-	case "up":
-		return "↑"
-	case "down":
-		return "↓"
-	case "left":
-		return "←"
-	case "right":
-		return "→"
-	default:
-		return k
+// ensureVisible adjusts the scroll offset so the cursor line stays on screen.
+func (m *Model) ensureVisible(cursorLine, height, total int) {
+	if cursorLine < m.listOffset {
+		m.listOffset = cursorLine
 	}
-}
-
-// firstDate returns the leading YYYY-MM-DD of a done annotation.
-func firstDate(s string) string {
-	if len(s) >= 10 {
-		return s[:10]
+	if cursorLine >= m.listOffset+height {
+		m.listOffset = cursorLine - height + 1
 	}
-	return s
+	m.listOffset = clamp(m.listOffset, 0, max(0, total-height))
 }

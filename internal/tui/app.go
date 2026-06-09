@@ -38,9 +38,10 @@ type Model struct {
 
 	width, height int
 
-	list   todo.List
-	rows   []visRow
-	cursor int
+	list       todo.List
+	rows       []visRow
+	cursor     int
+	listOffset int // first visible list line (vertical scroll)
 
 	mode      mode
 	form      *huh.Form
