@@ -10,6 +10,9 @@ import (
 	"github.com/develonaut/todui/internal/todo"
 )
 
+// titleWidth caps a list title so rows stay short regardless of panel width.
+const titleWidth = 64
+
 // View implements tea.Model. It composes child strings and wraps the result in
 // a single full-screen tea.View.
 func (m *Model) View() tea.View {
@@ -34,8 +37,8 @@ func (m *Model) viewForm() string {
 	return lipgloss.NewStyle().Margin(1, 2).Render(body)
 }
 
-// viewList renders the screen: a title bar, the scrollable sectioned list with
-// truncated titles, a detail pane for the selected task, then footer and help.
+// viewList renders the framed master/detail layout: a title row, a TASKS panel
+// beside a DETAIL panel, and a bottom keybar.
 func (m *Model) viewList() string {
 	w := m.width
 	if w <= 0 {
@@ -46,38 +49,60 @@ func (m *Model) viewList() string {
 		h = 24
 	}
 
-	detailH := clamp(h/4, 4, 8)
-	// chrome = title(1) + blank(1) + rule(1) + footer(1) + help(1)
-	listH := max(h-detailH-5, 3)
+	panelH := max(h-4, 6) // title(1) + blank(1) + panels + blank(1) + keybar(1)
+	bodyH := panelH - 2
+	leftW := clamp(w*2/5, 24, 64)
+	rightW := max(w-leftW-1, 24)
 
-	lines, cursorLine := m.listLines(w)
-	m.ensureVisible(cursorLine, listH, len(lines))
-	visible := padLines(window(lines, m.listOffset, listH), listH)
+	tasks := framePanel("TASKS", m.listBody(leftW-4, bodyH), leftW, styleBorderActive)
+	detail := framePanel("DETAIL", m.detailBody(rightW-4, bodyH), rightW, styleBorder)
 
-	rule := styleDim.Render(strings.Repeat("─", min(w, 100)))
-	detail := padLines(strings.Split(m.detailPane(min(w, 100)), "\n"), detailH)
-
-	out := []string{m.titleBar()}
-	out = append(out, "")
-	out = append(out, visible...)
-	out = append(out, rule)
-	out = append(out, detail...)
-	out = append(out, m.footer(), m.helpBar(w))
-	return strings.Join(out, "\n")
+	return strings.Join([]string{
+		m.titleBar(w),
+		"",
+		joinRows(tasks, detail, 1),
+		"",
+		m.bottomBar(w),
+	}, "\n")
 }
 
-// titleBar renders the app name and last-updated stamp.
-func (m *Model) titleBar() string {
-	bar := styleTitle.Render("todui")
-	if m.list.LastUpdated != "" {
-		bar += "  " + styleDim.Render(m.list.LastUpdated)
+// titleBar renders the app name on the left and the last-updated stamp right.
+func (m *Model) titleBar(w int) string {
+	left := styleTitle.Render("todui")
+	right := styleDim.Render(m.list.LastUpdated)
+	return spread(left, right, w)
+}
+
+// bottomBar renders contextual help (or a status/confirm message) on the left
+// and the item count on the right.
+func (m *Model) bottomBar(w int) string {
+	right := styleDim.Render(fmt.Sprintf("%d items", len(m.rows)))
+	avail := w - lipgloss.Width(right) - 2
+
+	var left string
+	switch {
+	case m.mode == modeConfirm:
+		left = styleConfirm.Render("delete " + m.confirmID + "? (y/n)")
+	case m.err != nil:
+		left = styleErr.Render(truncate(m.err.Error(), avail))
+	case m.status != "":
+		left = styleStatus.Render(m.status)
+	default:
+		left = m.helpBar(avail)
 	}
-	return bar
+	return spread(left, right, w)
+}
+
+// listBody builds the scrollable, section-grouped task lines for the TASKS panel.
+func (m *Model) listBody(cw, height int) string {
+	lines, cursorLine := m.listLines(cw)
+	m.ensureVisible(cursorLine, height, len(lines))
+	return strings.Join(padLines(window(lines, m.listOffset, height), height), "\n")
 }
 
 // listLines builds every list line (section headers and truncated item rows)
-// and reports which line the cursor is on.
-func (m *Model) listLines(w int) ([]string, int) {
+// for inner width cw and reports which line the cursor is on.
+func (m *Model) listLines(cw int) ([]string, int) {
 	s := m.svc.Schema()
 	var lines []string
 	cursorLine := 0
@@ -92,16 +117,15 @@ func (m *Model) listLines(w int) ([]string, int) {
 			if idx == m.cursor {
 				cursorLine = len(lines)
 			}
-			lines = append(lines, m.itemLine(s, sec, it, idx == m.cursor, w))
+			lines = append(lines, m.itemLine(s, sec, it, idx == m.cursor, cw))
 			idx++
 		}
 	}
 	return lines, cursorLine
 }
 
-// itemLine renders one compact, single-line item: cursor, ID, claimed dot, and
-// a truncated title.
-func (m *Model) itemLine(s todo.Schema, sec todo.Section, it todo.Item, selected bool, w int) string {
+// itemLine renders one compact row: cursor, ID, claimed dot, and short title.
+func (m *Model) itemLine(s todo.Schema, sec todo.Section, it todo.Item, selected bool, cw int) string {
 	mark := s.ID(sec, it.Order)
 	if mark == "" {
 		mark = "·"
@@ -110,23 +134,25 @@ func (m *Model) itemLine(s todo.Schema, sec todo.Section, it todo.Item, selected
 	if selected {
 		cursor = styleCursor.Render("▸ ")
 	}
-	claimed := " "
+	dot := " "
 	if it.Claimed {
-		claimed = styleClaim.Render("●")
+		dot = styleClaim.Render("●")
 	}
 
-	title := truncate(shortTitle(it.Task), max(10, w-9))
+	title := truncate(shortTitle(it.Task), max(1, min(cw-8, titleWidth)))
+	style := styleItem
 	if selected {
-		title = styleSelected.Render(title)
+		style = styleSelect
 	}
-	return cursor + styleID.Render(fmt.Sprintf("%-3s", mark)) + " " + claimed + " " + title
+	return cursor + styleID.Render(fmt.Sprintf("%-3s", mark)) + " " + dot + " " + style.Render(title)
 }
 
-// detailPane renders the full detail of the selected task, wrapped to width.
-func (m *Model) detailPane(w int) string {
+// detailBody renders the selected task's full, dimmed detail for the DETAIL
+// panel: a header line, the wrapped description, then context/tags/ref.
+func (m *Model) detailBody(cw, height int) string {
 	r, ok := m.selectedRow()
 	if !ok {
-		return styleDim.Render("No task selected.")
+		return strings.Join(padLines([]string{styleDim.Render("No task selected.")}, height), "\n")
 	}
 	it := r.item
 
@@ -134,7 +160,7 @@ func (m *Model) detailPane(w int) string {
 	if id == "" {
 		id = "done"
 	}
-	bits := []string{styleID.Render(id), r.section.Title}
+	bits := []string{styleID.Render(id), styleDim.Render(r.section.Title)}
 	if it.Claimed {
 		bits = append(bits, styleClaim.Render("claimed"))
 	}
@@ -142,41 +168,28 @@ func (m *Model) detailPane(w int) string {
 		bits = append(bits, styleDim.Render("done "+firstDate(it.DoneDate)))
 	}
 
-	wrap := lipgloss.NewStyle().Width(w)
-	parts := []string{strings.Join(bits, styleDim.Render(" · ")), wrap.Render(it.Task)}
+	lines := []string{strings.Join(bits, styleFaint.Render(" · ")), ""}
+	lines = append(lines, strings.Split(styleDetail.Width(cw).Render(it.Task), "\n")...)
 
 	var meta []string
 	if it.Context != "" {
-		meta = append(meta, styleDim.Render("context: ")+it.Context)
+		meta = append(meta, styleDim.Render("context ")+styleDetail.Render(it.Context))
 	}
 	if len(it.Tags) > 0 {
-		var tags []string
-		for _, t := range it.Tags {
-			tags = append(tags, styleTag.Render("["+t+"]"))
+		tags := make([]string, len(it.Tags))
+		for i, t := range it.Tags {
+			tags[i] = styleTag.Render(t)
 		}
 		meta = append(meta, strings.Join(tags, " "))
 	}
 	if it.ADO != "" {
-		meta = append(meta, styleDim.Render("ref: ")+it.ADO)
+		meta = append(meta, styleDim.Render("ref ")+styleDetail.Render(it.ADO))
 	}
 	if len(meta) > 0 {
-		parts = append(parts, wrap.Render(strings.Join(meta, "   ")))
+		lines = append(lines, "")
+		lines = append(lines, strings.Split(lipgloss.NewStyle().Width(cw).Render(strings.Join(meta, "   ")), "\n")...)
 	}
-	return strings.Join(parts, "\n")
-}
-
-// footer renders the transient status / confirm / error line.
-func (m *Model) footer() string {
-	switch {
-	case m.mode == modeConfirm:
-		return styleConfirm.Render(fmt.Sprintf("delete %s? (y/n)", m.confirmID))
-	case m.err != nil:
-		return styleErr.Render("error: " + m.err.Error())
-	case m.status != "":
-		return styleStatus.Render(m.status)
-	default:
-		return styleDim.Render(fmt.Sprintf("%d items", len(m.rows)))
-	}
+	return strings.Join(padLines(lines, height), "\n")
 }
 
 // helpBar renders the context-appropriate keys from the same keymap used for
@@ -209,4 +222,10 @@ func (m *Model) ensureVisible(cursorLine, height, total int) {
 		m.listOffset = cursorLine - height + 1
 	}
 	m.listOffset = clamp(m.listOffset, 0, max(0, total-height))
+}
+
+// spread places left and right text on one line of width w, justified apart.
+func spread(left, right string, w int) string {
+	gap := max(w-lipgloss.Width(left)-lipgloss.Width(right), 1)
+	return left + strings.Repeat(" ", gap) + right
 }
