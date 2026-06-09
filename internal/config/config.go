@@ -17,6 +17,8 @@ type Config struct {
 	Header       []string     `toml:"header,omitempty"`
 	Sections     []SectionDef `toml:"section"`
 	Done         DoneConfig   `toml:"done"`
+	// Keys holds optional TUI keybinding overrides: scope -> action -> keys.
+	Keys map[string]map[string][]string `toml:"keys,omitempty"`
 }
 
 // SectionDef configures one section.

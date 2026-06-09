@@ -1,14 +1,15 @@
 package cli
 
-import "fmt"
+import (
+	"github.com/develonaut/todui/internal/keymap"
+	"github.com/develonaut/todui/internal/tui"
+)
 
-// tuiCmd is a placeholder until the interactive UI lands in a later milestone.
 type tuiCmd struct{}
 
 func (tuiCmd) Name() string  { return "tui" }
-func (tuiCmd) Usage() string { return "tui  — launch the interactive UI" }
+func (tuiCmd) Usage() string { return "tui  — launch the interactive UI (default)" }
 
 func (tuiCmd) Run(cx *Context, _ []string) error {
-	fmt.Fprintln(cx.Err, "todui: the interactive TUI is not built yet — use the CLI (todui help)")
-	return nil
+	return tui.Run(cx.Svc, keymap.OverridesFromMap(cx.Cfg.Keys))
 }
