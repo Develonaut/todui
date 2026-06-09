@@ -63,17 +63,17 @@ func defaultKeymap() *keymap.Keymap {
 			{Action: actAdd, Keys: []string{"a"}, Help: "add"},
 		}},
 		keymap.Layer{Scope: scopeItem, Bindings: []keymap.Binding{
-			{Action: actComplete, Keys: []string{"space", " ", "x"}, Help: "done", HelpKey: "space"},
+			{Action: actComplete, Keys: []string{"d"}, Help: "done"},
 			{Action: actEdit, Keys: []string{"e"}, Help: "edit"},
 			{Action: actStart, Keys: []string{"s"}, Help: "start"},
-			{Action: actDelete, Keys: []string{"d"}, Help: "delete"},
+			{Action: actDelete, Keys: []string{"x", "delete", "backspace"}, Help: "delete"},
 			{Action: actReorderUp, Keys: []string{"shift+up", "K"}, Hidden: true},
 			{Action: actReorderDown, Keys: []string{"shift+down", "J"}, Help: "reorder", HelpKey: "⇧↑↓"},
 			{Action: actMovePrev, Keys: []string{"shift+left", "H"}, Hidden: true},
 			{Action: actMoveNext, Keys: []string{"shift+right", "L"}, Help: "move", HelpKey: "⇧←→"},
 		}},
 		keymap.Layer{Scope: scopeHeader, Bindings: []keymap.Binding{
-			{Action: actFoldToggle, Keys: []string{"space", " ", "enter"}, Hidden: true},
+			{Action: actFoldToggle, Keys: []string{"enter"}, Hidden: true},
 		}},
 		keymap.Layer{Scope: scopeEmpty, Bindings: nil},
 		keymap.Layer{Scope: scopeConfirm, Bindings: []keymap.Binding{

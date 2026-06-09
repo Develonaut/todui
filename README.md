@@ -80,11 +80,11 @@ Every command supports `--json` for scripting.
 
 It navigates like a tree: `↑`/`↓` move through section groups and items, `→`
 opens a collapsed group (or steps into an open one), `←` collapses a group (or
-jumps from an item to its parent). Then `space` done · `a` add · `e` edit ·
-`d` delete · `s` start · `⇧↑`/`⇧↓` reorder · `⇧←`/`⇧→` move to section ·
+jumps from an item to its parent). Then `d` done · `e` edit · `x` delete ·
+`s` start · `a` add · `⇧↑`/`⇧↓` reorder · `⇧←`/`⇧→` move to section ·
 `Tab` jump section · `+`/`-` adjust goal · `?` help · `q` quit. (Vim keys
-`j`/`k`/`h`/`l` work too.) The Done section starts collapsed; a magenta→purple
-progress bar tracks your daily goal.
+`j`/`k`/`h`/`l` work too; `Enter` toggles a group.) The Done section starts
+collapsed; a magenta→purple progress bar tracks your daily goal.
 
 Keybindings are **contextual and fully remappable**. They are organized into
 scopes (`global`, `list`, `item`, `confirm`); the active scope stack drives both
