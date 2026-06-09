@@ -7,14 +7,18 @@ import (
 )
 
 // framePanel draws a rounded box of the given total width with a letter-spaced
-// label inset into the top border (bnto style). Body lines must already fit the
-// inner width (width-4); they are padded, never truncated, so styling is safe.
+// label inset into the top border (bnto style); an empty label yields a plain
+// top border. Body lines must already fit the inner width (width-4); they are
+// padded, never truncated, so styling is safe.
 func framePanel(label, body string, width int, border lipgloss.Style) string {
 	cw := max(width-4, 1)
-	lbl := styleLabel.Render(spaceLetters(label))
-	dashes := max(width-lipgloss.Width(lbl)-5, 0)
 
-	top := border.Render("╭─ ") + lbl + border.Render(" "+strings.Repeat("─", dashes)+"╮")
+	top := border.Render("╭" + strings.Repeat("─", width-2) + "╮")
+	if label != "" {
+		lbl := styleLabel.Render(spaceLetters(label))
+		dashes := max(width-lipgloss.Width(lbl)-5, 0)
+		top = border.Render("╭─ ") + lbl + border.Render(" "+strings.Repeat("─", dashes)+"╮")
+	}
 	bottom := border.Render("╰" + strings.Repeat("─", width-2) + "╯")
 
 	var b strings.Builder

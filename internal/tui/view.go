@@ -8,9 +8,6 @@ import (
 	"charm.land/lipgloss/v2"
 )
 
-// titleWidth caps a list title so rows stay short regardless of panel width.
-const titleWidth = 64
-
 // View implements tea.Model. It composes child strings and wraps the result in
 // a single full-screen tea.View.
 func (m *Model) View() tea.View {
@@ -48,21 +45,36 @@ func (m *Model) viewList() string {
 		h = 24
 	}
 
-	// logo(1) + goal(1) + blank(1) + tasks(listH+2) + detail(detailH+2) + keybar(1)
+	// header(3) + tasks(listH+2) + detail(detailH+2) + keybar(1)
 	detailH := clamp(h/4, 5, 9)
 	listH := max(h-detailH-8, 3)
 
+	header := framePanel("", m.headerContent(w-4), w, styleBorder)
 	tasks := framePanel("TASKS", m.listBody(w-4, listH), w, styleBorderActive)
 	detail := framePanel("DETAIL", m.detailBody(w-4, detailH), w, styleBorder)
 
-	return strings.Join([]string{
-		spread(logo(), styleDim.Render(m.list.LastUpdated), w),
-		m.goalBar(w),
-		"",
-		tasks,
-		detail,
-		m.bottomBar(w),
-	}, "\n")
+	return strings.Join([]string{header, tasks, detail, m.bottomBar(w)}, "\n")
+}
+
+// headerContent lays out the logo on the left and the goal progress bar plus the
+// last-updated stamp on the right, justified across the full width.
+func (m *Model) headerContent(cw int) string {
+	var right string
+	if m.goal > 0 {
+		done := m.doneToday()
+		pct := float64(done) / float64(m.goal)
+		if pct > 1 {
+			pct = 1
+		}
+		right = m.progress.ViewAs(pct) + styleDim.Render(fmt.Sprintf("  %d/%d done today", done, m.goal))
+	}
+	if m.list.LastUpdated != "" {
+		if right != "" {
+			right += styleFaint.Render("    ")
+		}
+		right += styleDim.Render(m.list.LastUpdated)
+	}
+	return spread(logo(), right, cw)
 }
 
 // logo renders the TODUI wordmark with a magenta→purple per-letter gradient.
@@ -77,19 +89,6 @@ func logo() string {
 		}
 	}
 	return b.String()
-}
-
-// goalBar renders the daily-goal progress bar and count (empty when no goal).
-func (m *Model) goalBar(w int) string {
-	if m.goal <= 0 {
-		return ""
-	}
-	done := m.doneToday()
-	pct := float64(done) / float64(m.goal)
-	if pct > 1 {
-		pct = 1
-	}
-	return m.progress.ViewAs(pct) + styleDim.Render(fmt.Sprintf("  %d/%d done today", done, m.goal))
 }
 
 // bottomBar renders contextual help (or a status/confirm message) on the left
@@ -167,7 +166,8 @@ func (m *Model) itemLine(r visRow, cw int, selected bool) string {
 	if selected {
 		cur = styleCursor.Render("▸ ")
 	}
-	title := truncate(r.item.Title, max(1, min(cw-9, titleWidth)))
+	// Use the full panel width; only truncate if a title genuinely overflows it.
+	title := truncate(r.item.Title, max(1, cw-9))
 	style := styleItem
 	if selected {
 		style = styleSelect
