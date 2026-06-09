@@ -74,9 +74,13 @@ func (m *Model) beginDelete() {
 	}
 }
 
-// cancelDelete dismisses the delete confirmation.
+// cancelDelete dismisses the delete confirmation, applying any reload that was
+// deferred while the prompt was open.
 func (m *Model) cancelDelete() {
 	m.confirmID, m.mode = "", modeList
+	if m.pendingReload {
+		m.rebuild()
+	}
 }
 
 // confirmDelete removes the item pending confirmation.

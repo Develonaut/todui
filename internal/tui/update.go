@@ -1,6 +1,8 @@
 package tui
 
 import (
+	"path/filepath"
+
 	tea "charm.land/bubbletea/v2"
 	huh "charm.land/huh/v2"
 )
@@ -14,6 +16,15 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.form = m.form.WithWidth(formWidth(m.width)).WithHeight(formHeight(m.height))
 		}
 		return m, nil
+	case fileChangedMsg:
+		// Apply now in the list; defer while a form/confirm is open so an
+		// external write never yanks data out from under an edit.
+		if m.mode == modeList {
+			m.rebuild()
+		} else {
+			m.pendingReload = true
+		}
+		return m, watchCmd(m.watcher, filepath.Base(m.storePath))
 	case tea.KeyPressMsg:
 		if m.mode == modeForm {
 			return m.updateForm(msg)
@@ -52,7 +63,7 @@ func (m *Model) buildActions() map[string]func() tea.Cmd {
 		return func() tea.Cmd { fn(); return nil }
 	}
 	return map[string]func() tea.Cmd{
-		actQuit:        func() tea.Cmd { return tea.Quit },
+		actQuit:        func() tea.Cmd { m.closeWatcher(); return tea.Quit },
 		actHelp:        none(func() { m.showHelp = !m.showHelp }),
 		actReload:      none(m.rebuild),
 		actUp:          none(func() { m.moveCursor(-1) }),

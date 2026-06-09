@@ -4,8 +4,11 @@
 package tui
 
 import (
+	"path/filepath"
+
 	tea "charm.land/bubbletea/v2"
 	huh "charm.land/huh/v2"
+	"github.com/fsnotify/fsnotify"
 
 	"github.com/develonaut/todui/internal/app"
 	"github.com/develonaut/todui/internal/keymap"
@@ -50,6 +53,11 @@ type Model struct {
 	// maps keys to action ids).
 	actions map[string]func() tea.Cmd
 
+	// live reload
+	storePath     string
+	watcher       *fsnotify.Watcher
+	pendingReload bool
+
 	// form field bindings
 	fTask, fContext, fTags, fADO, fSection string
 	fClaimed                               bool
@@ -58,26 +66,37 @@ type Model struct {
 	err    error
 }
 
-// New builds the model, applying any keybinding overrides over the defaults.
-func New(svc *app.Service, overrides []keymap.Override) *Model {
+// New builds the model, applying any keybinding overrides over the defaults and
+// establishing a watcher on the store for live reload.
+func New(svc *app.Service, storePath string, overrides []keymap.Override) *Model {
 	km := defaultKeymap()
 	if len(overrides) > 0 {
 		km, _ = km.Merge(overrides)
 	}
-	m := &Model{svc: svc, keys: km, mode: modeList}
+	m := &Model{
+		svc:       svc,
+		keys:      km,
+		mode:      modeList,
+		storePath: storePath,
+		watcher:   newWatcher(storePath),
+	}
 	m.actions = m.buildActions()
 	m.rebuild()
 	return m
 }
 
 // Run launches the interactive program.
-func Run(svc *app.Service, overrides []keymap.Override) error {
-	_, err := tea.NewProgram(New(svc, overrides)).Run()
+func Run(svc *app.Service, storePath string, overrides []keymap.Override) error {
+	m := New(svc, storePath, overrides)
+	defer m.closeWatcher()
+	_, err := tea.NewProgram(m).Run()
 	return err
 }
 
-// Init implements tea.Model.
-func (m *Model) Init() tea.Cmd { return nil }
+// Init implements tea.Model: it begins listening for external file changes.
+func (m *Model) Init() tea.Cmd {
+	return watchCmd(m.watcher, filepath.Base(m.storePath))
+}
 
 // rebuild reloads the list from the service and flattens it into rows.
 func (m *Model) rebuild() {
@@ -100,6 +119,7 @@ func (m *Model) rebuild() {
 	if m.cursor < 0 {
 		m.cursor = 0
 	}
+	m.pendingReload = false
 }
 
 // selectedRow returns the row under the cursor, if any.

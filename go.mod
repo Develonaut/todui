@@ -6,6 +6,7 @@ require (
 	charm.land/bubbletea/v2 v2.0.7
 	charm.land/huh/v2 v2.0.3
 	charm.land/lipgloss/v2 v2.0.3
+	github.com/fsnotify/fsnotify v1.10.1
 	github.com/pelletier/go-toml/v2 v2.3.1
 	github.com/rogpeppe/go-internal v1.15.0
 )

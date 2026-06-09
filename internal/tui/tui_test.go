@@ -19,8 +19,9 @@ func (fixedClock) Now() time.Time { return time.Date(2026, 6, 9, 8, 0, 0, 0, tim
 func testModel(t *testing.T) *Model {
 	t.Helper()
 	dir := t.TempDir()
+	storePath := filepath.Join(dir, "todo.toml")
 	repo := filestore.New(filestore.Options{
-		Path:  filepath.Join(dir, "todo.toml"),
+		Path:  storePath,
 		Codec: tomlcodec.Codec{},
 	})
 	schema := todo.Schema{Sections: []todo.Section{
@@ -35,7 +36,8 @@ func testModel(t *testing.T) *Model {
 	if _, err := svc.Add(todo.Item{Task: "second", Section: "next"}); err != nil {
 		t.Fatal(err)
 	}
-	m := New(svc, nil)
+	m := New(svc, storePath, nil)
+	t.Cleanup(m.closeWatcher)
 	m.width, m.height = 80, 24
 	return m
 }
