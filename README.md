@@ -5,7 +5,7 @@ A tiny, config-driven task manager for your terminal — a CLI-first core with a
 TOML file; todui can also render a read-only Markdown mirror for at-a-glance
 reading.
 
-> **Status:** early development. See [the milestones](#status) below.
+> **Status:** functional — full CLI, interactive TUI, and Markdown import all work. See [the milestones](#status) below.
 
 ## Why
 
@@ -81,6 +81,18 @@ Every command supports `--json` for scripting.
 `a` add · `e` edit · `d` delete · `s` start/claim · `J`/`K` reorder ·
 `H`/`L` move section · `r` reload · `?` help · `q` quit.
 
+Keybindings are **contextual and fully remappable**. They are organized into
+scopes (`global`, `list`, `item`, `confirm`); the active scope stack drives both
+dispatch and the help bar from one source, so the help can never lie. Override
+any binding per scope in your config:
+
+```toml
+[keys.global]
+quit = ["q", "ctrl+q"]
+[keys.item]
+complete = ["enter", "x"]
+```
+
 ## Contributing
 
 This project follows a small set of engineering standards (single-responsibility
@@ -96,13 +108,13 @@ make lint    # golangci-lint + go vet
 ## Status
 
 - [x] **M0** — skeleton & standards
-- [ ] **M1** — domain core
-- [ ] **M2** — ports + adapters (TOML, store, Markdown renderer)
-- [ ] **M3** — app service + CLI
-- [ ] **M4** — Markdown importer
-- [ ] **M5** — TUI
-- [ ] **M6** — live reload
-- [ ] **M7** — release polish
+- [x] **M1** — domain core
+- [x] **M2** — ports + adapters (TOML, store, Markdown renderer)
+- [x] **M3** — app service + CLI
+- [x] **M4** — Markdown importer
+- [x] **M5** — TUI (with a contextual, configurable keymap)
+- [x] **M6** — live reload
+- [ ] **M7** — release polish (binaries, packaging)
 
 ## License
 
