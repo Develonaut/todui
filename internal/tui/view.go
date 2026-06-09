@@ -37,8 +37,8 @@ func (m *Model) viewForm() string {
 	return lipgloss.NewStyle().Margin(1, 2).Render(body)
 }
 
-// viewList renders the framed master/detail layout: a title row, a TASKS panel
-// beside a DETAIL panel, and a bottom keybar.
+// viewList renders the framed layout: a title row, a full-width TASKS panel
+// stacked above a full-width DETAIL panel, and a bottom keybar.
 func (m *Model) viewList() string {
 	w := m.width
 	if w <= 0 {
@@ -49,19 +49,18 @@ func (m *Model) viewList() string {
 		h = 24
 	}
 
-	panelH := max(h-4, 6) // title(1) + blank(1) + panels + blank(1) + keybar(1)
-	bodyH := panelH - 2
-	leftW := clamp(w*2/5, 24, 64)
-	rightW := max(w-leftW-1, 24)
+	// title(1) + blank(1) + tasks(listH+2) + detail(detailH+2) + keybar(1) = h
+	detailH := clamp(h/4, 5, 9)
+	listH := max(h-detailH-7, 3)
 
-	tasks := framePanel("TASKS", m.listBody(leftW-4, bodyH), leftW, styleBorderActive)
-	detail := framePanel("DETAIL", m.detailBody(rightW-4, bodyH), rightW, styleBorder)
+	tasks := framePanel("TASKS", m.listBody(w-4, listH), w, styleBorderActive)
+	detail := framePanel("DETAIL", m.detailBody(w-4, detailH), w, styleBorder)
 
 	return strings.Join([]string{
 		m.titleBar(w),
 		"",
-		joinRows(tasks, detail, 1),
-		"",
+		tasks,
+		detail,
 		m.bottomBar(w),
 	}, "\n")
 }

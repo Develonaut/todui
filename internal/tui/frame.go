@@ -26,26 +26,6 @@ func framePanel(label, body string, width int, border lipgloss.Style) string {
 	return b.String()
 }
 
-// joinRows places two equal-height blocks side by side with a gap. Each block's
-// lines are uniform width (panels pad their content), so a line-wise join aligns.
-func joinRows(a, b string, gap int) string {
-	al, bl := strings.Split(a, "\n"), strings.Split(b, "\n")
-	n := max(len(al), len(bl))
-	sp := strings.Repeat(" ", gap)
-	out := make([]string, n)
-	for i := range n {
-		la, lb := "", ""
-		if i < len(al) {
-			la = al[i]
-		}
-		if i < len(bl) {
-			lb = bl[i]
-		}
-		out[i] = la + sp + lb
-	}
-	return strings.Join(out, "\n")
-}
-
 // spaceLetters letter-spaces a label, e.g. "TASKS" -> "T A S K S".
 func spaceLetters(s string) string {
 	r := []rune(s)
